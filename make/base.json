@@ -1,0 +1,20 @@
+{
+  "baseUrl": "https://api.polymorfa.com",
+  "headers": {
+    "Authorization": "Bearer {{connection.apiKey}}",
+    "Polymorfa-Version": "2026-09-22",
+    "User-Agent": "polymorfa-make/0.1.0"
+  },
+  "log": {
+    "sanitize": [
+      "request.headers.authorization",
+      "request.body.headers",
+      "response.body.data.secret"
+    ]
+  },
+  "response": {
+    "error": {
+      "message": "[{{statusCode}}] Polymorfa {{body.error.code}}"
+    }
+  }
+}

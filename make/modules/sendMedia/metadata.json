@@ -1,0 +1,6 @@
+{
+  "label": "Send Media",
+  "description": "Sends an image, video, file or voice message.",
+  "connection": "project",
+  "type": "action"
+}

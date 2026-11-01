@@ -1,0 +1,23 @@
+{
+  "url": "/platform/sessions",
+  "method": "GET",
+  "qs": {
+    "projectId": "{{parameters.projectId}}"
+  },
+  "headers": {
+    "Authorization": "Bearer {{parameters.apiKey}}",
+    "Polymorfa-Version": "2026-09-22"
+  },
+  "response": {
+    "valid": "{{statusCode = 200}}",
+    "metadata": {
+      "type": "text",
+      "value": "{{parameters.projectId}}"
+    }
+  },
+  "log": {
+    "sanitize": [
+      "request.headers.authorization"
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+[
+  {
+    "name": "method",
+    "type": "select",
+    "label": "Method",
+    "required": true,
+    "default": "GET",
+    "options": [
+      {
+        "value": "GET",
+        "label": "GET"
+      },
+      {
+        "value": "POST",
+        "label": "POST"
+      }
+    ]
+  },
+  {
+    "name": "path",
+    "type": "text",
+    "label": "Path",
+    "required": true,
+    "help": "A supported relative public API path, for example /platform/sessions. External hosts and credential operations are refused."
+  },
+  {
+    "name": "requestBody",
+    "type": "text",
+    "label": "Request Body",
+    "required": false,
+    "default": "{}",
+    "help": "JSON object. Authentication and version headers are supplied by the connection."
+  },
+  {
+    "name": "idempotencyKey",
+    "type": "text",
+    "label": "Idempotency Key",
+    "required": false,
+    "help": "Required for writes. Map a stable business key unique to this write. Preserve it across retries."
+  },
+  {
+    "name": "writeCreatedAt",
+    "type": "text",
+    "label": "Write Started At",
+    "required": false,
+    "help": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes older than 23 hours require reconciliation."
+  }
+]

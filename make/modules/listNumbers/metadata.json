@@ -1,0 +1,6 @@
+{
+  "label": "List Numbers",
+  "description": "Lists Numbers visible to the connected project.",
+  "connection": "project",
+  "type": "action"
+}

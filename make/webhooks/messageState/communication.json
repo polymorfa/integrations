@@ -1,0 +1,15 @@
+{
+  "condition": "{{polymorfaReceive(parameters.receiverName; parameters.receiverValue; 'messageState'; headers; body)}}",
+  "respond": {
+    "status": "{{if(polymorfaReceive(parameters.receiverName; parameters.receiverValue; 'messageState'; headers; body); 200; 401)}}",
+    "type": "json",
+    "body": {}
+  },
+  "output": {
+    "id": "{{body.id}}",
+    "session": "{{body.session}}",
+    "timestamp": "{{body.timestamp}}",
+    "event": "{{body.event}}",
+    "payload": "{{body.payload}}"
+  }
+}

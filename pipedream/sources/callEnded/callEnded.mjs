@@ -1,0 +1,25 @@
+// Generated from shared/catalog.cjs.
+import polymorfa from '../../polymorfa.app.mjs';
+export default {
+  key: "polymorfa-callEnded", name: "Call Ended", description: "Triggers when a call ends.",
+  version: '0.1.0', type: 'source', dedupe: 'unique',
+  props: { polymorfa, db: '$.service.db', http: { type: '$.interface.http', customResponse: true },
+    subscriptionKey: { type: 'string', label: 'Subscription Key', description: 'Unique stable label for this source. Events are project-wide.' } },
+  hooks: {
+    async activate() {
+      const owned = await this.polymorfa.subscribe(undefined, this.http.endpoint, "callEnded", this.subscriptionKey);
+      this.db.set('ownedSubscription', owned);
+    },
+    async deactivate() {
+      const owned = this.db.get('ownedSubscription');
+      if (owned) { await this.polymorfa.unsubscribe(undefined, owned); this.db.set('ownedSubscription', null); }
+    },
+  },
+  async run(event) {
+    if (!this.polymorfa.authenticate("callEnded", this.subscriptionKey, event.headers)) { this.http.respond({ status: 401 }); return; }
+    let data;
+    try { data = this.polymorfa.envelope(event.body, "callEnded"); } catch { this.http.respond({ status: 400 }); return; }
+    this.$emit(data, { id: data.id, summary: data.event, ts: Date.parse(data.timestamp) });
+    this.http.respond({ status: 200 });
+  },
+};

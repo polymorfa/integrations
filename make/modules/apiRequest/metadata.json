@@ -1,0 +1,6 @@
+{
+  "label": "Make an API call",
+  "description": "Performs an arbitrary authorized API call.",
+  "connection": "project",
+  "type": "action"
+}

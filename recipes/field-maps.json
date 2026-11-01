@@ -1,0 +1,15 @@
+{
+  "stage": "native templates pending assigned app IDs and editor acceptance",
+  "orderNotification": {
+    "action": "sendText",
+    "fields": { "session": "order.numberId", "recipientType": "phoneNumber", "recipient": "order.recipient", "text": "order.notificationText", "idempotencyKey": "order-notification:{savedNotificationId}", "writeCreatedAt": "order.savedNotificationStartedAt" },
+    "platforms": {
+      "make": { "module": "sendText", "appId": null, "blueprintId": null },
+      "zapier": { "action": "sendText", "appId": null, "templateId": null },
+      "pipedream": { "requestedComponentKey": "polymorfa-sendText", "assignedAppId": null, "acceptedComponentId": null }
+    }
+  },
+  "inboundHandoff": { "trigger": "messageReceived", "identity": "id", "content": "payload", "destination": "customer-authorized CRM/helpdesk", "requiredBeforeEffect": "persistent event-ID dedupe and destination authentication" },
+  "appointmentFollowUp": { "steps": ["Save appointment/conversation association in the chosen external store", "Record matching inbound replies by stable event ID", "Wait using the external platform", "Re-read reply/cancellation/expiry state", "Admit the due follow-up using one stable logical-write identity", "Send through the same native action"], "nativeAcceptance": null },
+  "functionTransformation": { "stage": "blocked", "reason": "Functions invocation is not in the accepted public contract", "nativeTemplateIds": null }
+}

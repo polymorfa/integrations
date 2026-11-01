@@ -1,0 +1,64 @@
+[
+  {
+    "name": "session",
+    "type": "text",
+    "label": "Number",
+    "required": true,
+    "help": "The exact Number identifier from Polymorfa. Keep it as a string."
+  },
+  {
+    "name": "recipientType",
+    "type": "select",
+    "label": "Recipient Type",
+    "required": true,
+    "default": "phoneNumber",
+    "options": [
+      {
+        "value": "phoneNumber",
+        "label": "Phone Number"
+      },
+      {
+        "value": "id",
+        "label": "Conversation ID"
+      },
+      {
+        "value": "bsuid",
+        "label": "Business-scoped User ID"
+      }
+    ]
+  },
+  {
+    "name": "recipient",
+    "type": "text",
+    "label": "Recipient",
+    "required": true,
+    "help": "Use an international phone number including +, a conversation ID, or a business-scoped user ID."
+  },
+  {
+    "name": "messageId",
+    "type": "text",
+    "label": "Message ID",
+    "required": true
+  },
+  {
+    "name": "reaction",
+    "type": "text",
+    "label": "Reaction",
+    "required": true,
+    "help": "An emoji, or an empty string to remove the reaction."
+  },
+  {
+    "name": "idempotencyKey",
+    "type": "text",
+    "label": "Idempotency Key",
+    "required": true,
+    "help": "Required for writes. Map a stable business key unique to this write. Preserve it across retries."
+  },
+  {
+    "name": "writeCreatedAt",
+    "type": "text",
+    "label": "Write Started At",
+    "required": true,
+    "help": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes older than 23 hours require reconciliation."
+  }
+]

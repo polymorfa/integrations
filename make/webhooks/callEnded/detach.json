@@ -1,0 +1,20 @@
+[
+  {
+    "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks/{{polymorfaSegment(webhook.externalHookId)}}",
+    "method": "GET",
+    "response": {
+      "temp": {
+        "gone": "{{statusCode = 404}}"
+      },
+      "valid": "{{if(statusCode = 404; true; polymorfaOwnedHook(body; connection.projectId; webhook.ownedUrl; webhook.receiverName; 'callEnded'))}}"
+    }
+  },
+  {
+    "condition": "{{!temp.gone}}",
+    "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks/{{polymorfaSegment(webhook.externalHookId)}}",
+    "method": "DELETE",
+    "headers": {
+      "Idempotency-Key": "integration-delete-{{webhook.externalHookId}}"
+    }
+  }
+]

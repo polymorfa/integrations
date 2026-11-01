@@ -1,0 +1,52 @@
+[
+  {
+    "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks",
+    "method": "GET",
+    "qs": {
+      "limit": 100
+    },
+    "response": {
+      "temp": {
+        "ownedId": "{{polymorfaFindHook(body; connection; webhook.url; 'numberState'; parameters.subscriptionKey)}}"
+      },
+      "data": {
+        "externalHookId": "{{temp.ownedId}}",
+        "ownedUrl": "{{webhook.url}}",
+        "receiverName": "{{get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'name')}}",
+        "receiverValue": "{{get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'value')}}"
+      }
+    }
+  },
+  {
+    "condition": "{{!temp.ownedId}}",
+    "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks",
+    "method": "POST",
+    "headers": {
+      "Idempotency-Key": "integration-create-{{get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'key')}}"
+    },
+    "body": {
+      "url": "{{webhook.url}}",
+      "eventTypes": [
+        "session.status",
+        "session.connected",
+        "session.logged_out"
+      ],
+      "format": "native",
+      "enabled": true,
+      "headers": [
+        {
+          "name": "{{get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'name')}}",
+          "value": "{{get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'value')}}"
+        }
+      ]
+    },
+    "response": {
+      "data": {
+        "externalHookId": "{{body.data.webhook.id}}",
+        "ownedUrl": "{{webhook.url}}",
+        "receiverName": "{{get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'name')}}",
+        "receiverValue": "{{get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'value')}}"
+      }
+    }
+  }
+]

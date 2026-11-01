@@ -1,0 +1,7 @@
+{
+  "name": "polymorfa-zapier", "version": "0.1.0", "private": true,
+  "description": "First-party Polymorfa integration for Zapier", "license": "MIT",
+  "main": "index.js", "engines": { "node": "22.x" },
+  "dependencies": { "zapier-platform-core": "19.3.0" },
+  "scripts": { "validate": "zapier-platform validate --without-style" }
+}

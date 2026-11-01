@@ -1,0 +1,96 @@
+[
+  {
+    "name": "id",
+    "label": "id",
+    "type": "text"
+  },
+  {
+    "name": "session",
+    "label": "session",
+    "type": "text"
+  },
+  {
+    "name": "externalId",
+    "label": "externalId",
+    "type": "text"
+  },
+  {
+    "name": "timestamp",
+    "label": "timestamp",
+    "type": "text"
+  },
+  {
+    "name": "event",
+    "label": "event",
+    "type": "text"
+  },
+  {
+    "name": "payload",
+    "label": "payload",
+    "type": "collection",
+    "spec": [
+      {
+        "name": "from",
+        "label": "from",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "id",
+            "label": "id",
+            "type": "text"
+          },
+          {
+            "name": "phoneNumber",
+            "label": "phoneNumber",
+            "type": "text"
+          },
+          {
+            "name": "bsuid",
+            "label": "bsuid",
+            "type": "text"
+          },
+          {
+            "name": "username",
+            "label": "username",
+            "type": "text"
+          },
+          {
+            "name": "parentBsuid",
+            "label": "parentBsuid",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "callId",
+        "label": "callId",
+        "type": "text"
+      },
+      {
+        "name": "durationSeconds",
+        "label": "durationSeconds",
+        "type": "number"
+      },
+      {
+        "name": "reason",
+        "label": "reason",
+        "type": "text"
+      },
+      {
+        "name": "direction",
+        "label": "direction",
+        "type": "text"
+      },
+      {
+        "name": "hadVideo",
+        "label": "hadVideo",
+        "type": "boolean"
+      },
+      {
+        "name": "sessionConnection",
+        "label": "sessionConnection",
+        "type": "text"
+      }
+    ]
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "name": "Polymorfa order notification (configure before use)",
+  "active": false,
+  "nodes": [
+    { "id": "recipe-input", "name": "Replace with authorized order trigger", "type": "n8n-nodes-base.manualTrigger", "typeVersion": 1, "position": [0, 0], "parameters": {} },
+    { "id": "notify-order", "name": "Send order notification", "type": "n8n-nodes-polymorfa.polymorfa", "typeVersion": 1, "position": [260, 0], "parameters": { "operation": "sendText", "session": "={{$json.numberId}}", "recipientType": "phoneNumber", "recipient": "={{$json.recipient}}", "text": "={{$json.notificationText}}", "idempotencyKey": "={{'order-notification:' + $json.notificationId}}", "writeCreatedAt": "={{$json.notificationStartedAt}}" } }
+  ],
+  "connections": { "Replace with authorized order trigger": { "main": [[{ "node": "Send order notification", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1" }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "n8n-nodes-polymorfa",
+  "version": "0.1.0",
+  "description": "Polymorfa actions and authenticated project webhook triggers for n8n",
+  "license": "MIT",
+  "author": { "name": "Polymorfa", "email": "support@polymorfa.com", "url": "https://www.polymorfa.com" },
+  "repository": { "type": "git", "url": "git+https://github.com/polymorfa/integrations.git", "directory": "n8n" },
+  "homepage": "https://docs.polymorfa.com",
+  "keywords": ["n8n-community-node-package", "polymorfa", "whatsapp"],
+  "main": "dist/nodes/Polymorfa/Polymorfa.node.js",
+  "files": ["dist", "README.md", "LICENSE", "NOTICE.md"],
+  "scripts": { "build": "n8n-node build", "lint": "n8n-node lint" },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": ["dist/credentials/PolymorfaApi.credentials.js"],
+    "nodes": ["dist/nodes/Polymorfa/Polymorfa.node.js", "dist/nodes/Polymorfa/PolymorfaTrigger.node.js"]
+  },
+  "peerDependencies": { "n8n-workflow": "*" },
+  "devDependencies": { "n8n-workflow": "2.16.0" },
+  "publishConfig": { "access": "public", "provenance": true }
+}

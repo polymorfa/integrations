@@ -12,5 +12,11 @@ a separate workflow engine or stores your third-party app connections.
 
 Documentation: [docs.polymorfa.com](https://docs.polymorfa.com).
 
+Build and maintenance: [MAINTAINING.md](MAINTAINING.md).
+Provider source: [n8n](n8n/README.md), [Make](make/README.md),
+[Zapier](zapier/README.md), [Pipedream](pipedream/README.md).
+[Recipe candidates](recipes/README.md) and [release state](releases/0.1.0.json)
+record the remaining native acceptance and publication work.
+
 License: MIT. Newly authored connector code only; no archived Titan adapter code
 is included.

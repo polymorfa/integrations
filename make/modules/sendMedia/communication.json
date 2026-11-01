@@ -1,0 +1,19 @@
+{
+  "url": "{{get(polymorfaRequest('sendMedia'; parameters; connection); 'url')}}",
+  "method": "{{get(polymorfaRequest('sendMedia'; parameters; connection); 'method')}}",
+  "headers": "{{get(polymorfaRequest('sendMedia'; parameters; connection); 'headers')}}",
+  "qs": "{{get(polymorfaRequest('sendMedia'; parameters; connection); 'query')}}",
+  "body": "{{get(polymorfaRequest('sendMedia'; parameters; connection); 'body')}}",
+  "type": "json",
+  "followRedirect": false,
+  "response": {
+    "valid": "{{polymorfaResult(statusCode; headers; body) != null}}",
+    "output": "{{polymorfaResult(statusCode; headers; body)}}"
+  },
+  "log": {
+    "sanitize": [
+      "request.headers.authorization",
+      "request.headers.idempotency-key"
+    ]
+  }
+}

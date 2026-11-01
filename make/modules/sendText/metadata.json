@@ -1,0 +1,6 @@
+{
+  "label": "Send Text",
+  "description": "Sends a text message or replies to a message.",
+  "connection": "project",
+  "type": "action"
+}

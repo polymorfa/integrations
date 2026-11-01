@@ -1,0 +1,602 @@
+[
+  {
+    "name": "id",
+    "label": "id",
+    "type": "text"
+  },
+  {
+    "name": "session",
+    "label": "session",
+    "type": "text"
+  },
+  {
+    "name": "externalId",
+    "label": "externalId",
+    "type": "text"
+  },
+  {
+    "name": "timestamp",
+    "label": "timestamp",
+    "type": "text"
+  },
+  {
+    "name": "event",
+    "label": "event",
+    "type": "text"
+  },
+  {
+    "name": "payload",
+    "label": "payload",
+    "type": "collection",
+    "spec": [
+      {
+        "name": "id",
+        "label": "id",
+        "type": "text"
+      },
+      {
+        "name": "whatsapp_ids",
+        "label": "whatsapp_ids",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "linked_devices",
+            "label": "linked_devices",
+            "type": "text"
+          },
+          {
+            "name": "official_api",
+            "label": "official_api",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "whatsapp_id",
+        "label": "whatsapp_id",
+        "type": "text"
+      },
+      {
+        "name": "conversation",
+        "label": "conversation",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "id",
+            "label": "id",
+            "type": "text"
+          },
+          {
+            "name": "phoneNumber",
+            "label": "phoneNumber",
+            "type": "text"
+          },
+          {
+            "name": "bsuid",
+            "label": "bsuid",
+            "type": "text"
+          },
+          {
+            "name": "username",
+            "label": "username",
+            "type": "text"
+          },
+          {
+            "name": "parentBsuid",
+            "label": "parentBsuid",
+            "type": "text"
+          },
+          {
+            "name": "sender",
+            "label": "sender",
+            "type": "collection",
+            "spec": [
+              {
+                "name": "id",
+                "label": "id",
+                "type": "text"
+              },
+              {
+                "name": "phoneNumber",
+                "label": "phoneNumber",
+                "type": "text"
+              },
+              {
+                "name": "bsuid",
+                "label": "bsuid",
+                "type": "text"
+              },
+              {
+                "name": "username",
+                "label": "username",
+                "type": "text"
+              },
+              {
+                "name": "parentBsuid",
+                "label": "parentBsuid",
+                "type": "text"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "type",
+        "label": "type",
+        "type": "text"
+      },
+      {
+        "name": "timestamp",
+        "label": "timestamp",
+        "type": "number"
+      },
+      {
+        "name": "width",
+        "label": "width",
+        "type": "number"
+      },
+      {
+        "name": "height",
+        "label": "height",
+        "type": "number"
+      },
+      {
+        "name": "seconds",
+        "label": "seconds",
+        "type": "number"
+      },
+      {
+        "name": "waveform",
+        "label": "waveform",
+        "type": "array"
+      },
+      {
+        "name": "pageCount",
+        "label": "pageCount",
+        "type": "number"
+      },
+      {
+        "name": "thumbnail",
+        "label": "thumbnail",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "contentType",
+            "label": "contentType",
+            "type": "text"
+          },
+          {
+            "name": "data",
+            "label": "data",
+            "type": "text"
+          },
+          {
+            "name": "width",
+            "label": "width",
+            "type": "number"
+          },
+          {
+            "name": "height",
+            "label": "height",
+            "type": "number"
+          }
+        ]
+      },
+      {
+        "name": "linkPreview",
+        "label": "linkPreview",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "url",
+            "label": "url",
+            "type": "text"
+          },
+          {
+            "name": "title",
+            "label": "title",
+            "type": "text"
+          },
+          {
+            "name": "description",
+            "label": "description",
+            "type": "text"
+          },
+          {
+            "name": "previewType",
+            "label": "previewType",
+            "type": "text"
+          },
+          {
+            "name": "thumbnail",
+            "label": "thumbnail",
+            "type": "collection",
+            "spec": [
+              {
+                "name": "contentType",
+                "label": "contentType",
+                "type": "text"
+              },
+              {
+                "name": "data",
+                "label": "data",
+                "type": "text"
+              },
+              {
+                "name": "width",
+                "label": "width",
+                "type": "number"
+              },
+              {
+                "name": "height",
+                "label": "height",
+                "type": "number"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "association",
+        "label": "association",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "type",
+            "label": "type",
+            "type": "text"
+          },
+          {
+            "name": "parentMessageId",
+            "label": "parentMessageId",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "quality",
+        "label": "quality",
+        "type": "text"
+      },
+      {
+        "name": "messages",
+        "label": "messages",
+        "type": "array",
+        "spec": {
+          "type": "collection",
+          "spec": [
+            {
+              "name": "id",
+              "label": "id",
+              "type": "text"
+            },
+            {
+              "name": "whatsapp_ids",
+              "label": "whatsapp_ids",
+              "type": "collection",
+              "spec": [
+                {
+                  "name": "linked_devices",
+                  "label": "linked_devices",
+                  "type": "text"
+                },
+                {
+                  "name": "official_api",
+                  "label": "official_api",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "name": "whatsapp_id",
+              "label": "whatsapp_id",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      {
+        "name": "from",
+        "label": "from",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "id",
+            "label": "id",
+            "type": "text"
+          },
+          {
+            "name": "phoneNumber",
+            "label": "phoneNumber",
+            "type": "text"
+          },
+          {
+            "name": "bsuid",
+            "label": "bsuid",
+            "type": "text"
+          },
+          {
+            "name": "username",
+            "label": "username",
+            "type": "text"
+          },
+          {
+            "name": "parentBsuid",
+            "label": "parentBsuid",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "sender",
+        "label": "sender",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "id",
+            "label": "id",
+            "type": "text"
+          },
+          {
+            "name": "phoneNumber",
+            "label": "phoneNumber",
+            "type": "text"
+          },
+          {
+            "name": "bsuid",
+            "label": "bsuid",
+            "type": "text"
+          },
+          {
+            "name": "username",
+            "label": "username",
+            "type": "text"
+          },
+          {
+            "name": "parentBsuid",
+            "label": "parentBsuid",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "pricing",
+        "label": "pricing",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "billable",
+            "label": "billable",
+            "type": "boolean"
+          },
+          {
+            "name": "pricing_model",
+            "label": "pricing_model",
+            "type": "text"
+          },
+          {
+            "name": "category",
+            "label": "category",
+            "type": "text"
+          },
+          {
+            "name": "type",
+            "label": "type",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "to",
+        "label": "to",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "id",
+            "label": "id",
+            "type": "text"
+          },
+          {
+            "name": "phoneNumber",
+            "label": "phoneNumber",
+            "type": "text"
+          },
+          {
+            "name": "bsuid",
+            "label": "bsuid",
+            "type": "text"
+          },
+          {
+            "name": "username",
+            "label": "username",
+            "type": "text"
+          },
+          {
+            "name": "parentBsuid",
+            "label": "parentBsuid",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "error",
+        "label": "error",
+        "type": "text"
+      },
+      {
+        "name": "code",
+        "label": "code",
+        "type": "text"
+      },
+      {
+        "name": "retryAfter",
+        "label": "retryAfter",
+        "type": "number"
+      },
+      {
+        "name": "fromMe",
+        "label": "fromMe",
+        "type": "boolean"
+      },
+      {
+        "name": "pushName",
+        "label": "pushName",
+        "type": "text"
+      },
+      {
+        "name": "isGroup",
+        "label": "isGroup",
+        "type": "boolean"
+      },
+      {
+        "name": "text",
+        "label": "text",
+        "type": "text"
+      },
+      {
+        "name": "caption",
+        "label": "caption",
+        "type": "text"
+      },
+      {
+        "name": "mimeType",
+        "label": "mimeType",
+        "type": "text"
+      },
+      {
+        "name": "ptt",
+        "label": "ptt",
+        "type": "boolean"
+      },
+      {
+        "name": "filename",
+        "label": "filename",
+        "type": "text"
+      },
+      {
+        "name": "latitude",
+        "label": "latitude",
+        "type": "number"
+      },
+      {
+        "name": "longitude",
+        "label": "longitude",
+        "type": "number"
+      },
+      {
+        "name": "displayName",
+        "label": "displayName",
+        "type": "text"
+      },
+      {
+        "name": "title",
+        "label": "title",
+        "type": "text"
+      },
+      {
+        "name": "reaction",
+        "label": "reaction",
+        "type": "text"
+      },
+      {
+        "name": "reactionTo",
+        "label": "reactionTo",
+        "type": "text"
+      },
+      {
+        "name": "revokedId",
+        "label": "revokedId",
+        "type": "text"
+      },
+      {
+        "name": "nativeFlowResponse",
+        "label": "nativeFlowResponse",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "name",
+            "label": "name",
+            "type": "text"
+          },
+          {
+            "name": "paramsJson",
+            "label": "paramsJson",
+            "type": "text"
+          },
+          {
+            "name": "version",
+            "label": "version",
+            "type": "number"
+          }
+        ]
+      },
+      {
+        "name": "replyChoice",
+        "label": "replyChoice",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "kind",
+            "label": "kind",
+            "type": "text"
+          },
+          {
+            "name": "id",
+            "label": "id",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "parentMessageId",
+        "label": "parentMessageId",
+        "type": "text"
+      },
+      {
+        "name": "media",
+        "label": "media",
+        "type": "text"
+      },
+      {
+        "name": "mediaUrl",
+        "label": "mediaUrl",
+        "type": "text"
+      },
+      {
+        "name": "edited",
+        "label": "edited",
+        "type": "boolean"
+      },
+      {
+        "name": "pollOptions",
+        "label": "pollOptions",
+        "type": "array",
+        "spec": {
+          "type": "collection",
+          "spec": [
+            {
+              "name": "name",
+              "label": "name",
+              "type": "text"
+            },
+            {
+              "name": "hash",
+              "label": "hash",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      {
+        "name": "unavailable",
+        "label": "unavailable",
+        "type": "boolean"
+      },
+      {
+        "name": "unavailableReason",
+        "label": "unavailableReason",
+        "type": "text"
+      }
+    ]
+  }
+]

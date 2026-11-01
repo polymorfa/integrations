@@ -1,0 +1,15 @@
+{
+  "version": "0.1.0",
+  "stage": "development",
+  "reviewedSource": null,
+  "apiProductionAcceptance": null,
+  "n8nRuntimeAcceptance": null,
+  "publisherOwnership": null,
+  "publicationAuthorization": null,
+  "platforms": {
+    "n8n": { "package": "n8n-nodes-polymorfa", "publishedVersion": null, "verification": null, "listingUrl": null },
+    "zapier": { "appId": null, "deployedVersion": null, "directoryStage": null, "listingUrl": null },
+    "make": { "appId": null, "deployedVersion": null, "customFunctionsEnabled": false, "approved": false, "listingUrl": null },
+    "pipedream": { "appId": null, "registryPr": null, "componentVersions": null, "connectAcceptance": null, "mcpAcceptance": null, "listingUrl": null }
+  }
+}

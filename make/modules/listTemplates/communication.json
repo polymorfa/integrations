@@ -1,0 +1,19 @@
+{
+  "url": "{{get(polymorfaRequest('listTemplates'; parameters; connection); 'url')}}",
+  "method": "{{get(polymorfaRequest('listTemplates'; parameters; connection); 'method')}}",
+  "headers": "{{get(polymorfaRequest('listTemplates'; parameters; connection); 'headers')}}",
+  "qs": "{{get(polymorfaRequest('listTemplates'; parameters; connection); 'query')}}",
+  "body": "{{get(polymorfaRequest('listTemplates'; parameters; connection); 'body')}}",
+  "type": "json",
+  "followRedirect": false,
+  "response": {
+    "valid": "{{polymorfaResult(statusCode; headers; body) != null}}",
+    "output": "{{polymorfaResult(statusCode; headers; body)}}"
+  },
+  "log": {
+    "sanitize": [
+      "request.headers.authorization",
+      "request.headers.idempotency-key"
+    ]
+  }
+}

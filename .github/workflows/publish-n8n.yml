@@ -1,0 +1,34 @@
+name: Publish n8n package
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Reviewed package version
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm-release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+      - run: npm install --global npm@11.20.0
+      - run: npm ci --ignore-scripts --no-audit
+      - run: npm run check
+      - run: npm run lint --workspace n8n-nodes-polymorfa
+      - run: npm run check:sdk
+      - run: node scripts/release-gate.mjs
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+      - run: npm publish --workspace n8n-nodes-polymorfa --provenance --access public
