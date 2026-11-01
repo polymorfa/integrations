@@ -9,12 +9,12 @@ const iml = { sha256: (text, encoding, key) => key ? createHmac('sha256', key).u
 for (const file of readdirSync('make/functions')) {
   const text = readFileSync('make/functions/' + file, 'utf8');
   assert.ok(text.length <= 5000);
-  const name = file.slice(0, -3); iml[name] = vm.runInNewContext(`(${text})`, { Buffer, URL, iml });
+  const name = file.slice(0, -3); iml[name] = vm.runInNewContext(`(${text})`, { Buffer, iml });
 }
 const auth = { apiKey: 'synthetic-token', projectId: '11111111-1111-4111-8111-111111111111' };
 test('Make function output matches the shared public request across text, media and advanced calls', () => {
   const p = { session: '739182640518203', recipientType: 'id', recipient: '739182640518204', text: 'Synthetic', idempotencyKey: 'synthetic-write-1', writeCreatedAt: new Date().toISOString() };
-  for (const [action, extra] of [['sendText', {}], ['sendMedia', { mediaType: 'file', mediaSource: 'base64', media: 'AAECAw==' }], ['apiRequest', { method: 'GET', path: '/platform/sessions' }]]) {
+  for (const [action, extra] of [['sendText', {}], ['sendMedia', { mediaType: 'file', mediaSource: 'base64', media: 'AAECAw==' }], ['sendMedia', { mediaType: 'image', mediaSource: 'url', media: 'https://example.com/synthetic.png' }], ['apiRequest', { method: 'GET', path: '/platform/sessions' }]]) {
     const expected = core.buildRequest(action, { ...p, ...extra }, auth, 'make');
     const actual = iml.polymorfaRequest(action, { ...p, ...extra }, auth);
     assert.deepEqual(JSON.parse(JSON.stringify(actual)), expected);

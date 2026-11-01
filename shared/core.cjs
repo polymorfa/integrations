@@ -53,8 +53,10 @@ function messageBody(action, p) {
     if (!['image', 'video', 'file', 'voice'].includes(p.mediaType) || !['url', 'base64'].includes(p.mediaSource)) throw new IntegrationError('invalid_media_type');
     required(p.media, 'media');
     if (p.mediaSource === 'url') {
-      let u; try { u = new URL(p.media); } catch { throw new IntegrationError('invalid_media_url'); }
-      if (u.protocol !== 'https:' || u.username || u.password) throw new IntegrationError('invalid_media_url');
+      // Use only ECMAScript/Buffer globals: Make does not promise the URL Web API.
+      // Enforce HTTPS/no embedded credentials here; the API validates/fetches the URI.
+      const address = p.media.match(/^https:\/\/([^/?#]+)(?:[/?#]|$)/i);
+      if (!address || /[\s\\\x00-\x1f\x7f]/.test(p.media) || address[1].includes('@')) throw new IntegrationError('invalid_media_url');
     } else if (p.media.length > Math.ceil(MAX_MEDIA_BYTES / 3) * 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(p.media) || Buffer.from(p.media, 'base64').length > MAX_MEDIA_BYTES) {
       throw new IntegrationError('invalid_or_oversized_media');
     }
