@@ -15,9 +15,11 @@
     "build": "npm run generate && npm run build --workspace n8n-nodes-polymorfa",
     "test": "node --test --test-reporter=spec tests/*.test.cjs tests/*.test.mjs",
     "check": "npm run check:contracts && npm run check:generated && npm run build && npm test",
-    "validate:zapier": "npm run validate --workspace polymorfa-zapier"
+    "validate:zapier": "npm run validate --workspace polymorfa-zapier",
+    "make:access": "node scripts/make-access.mjs"
   },
   "devDependencies": {
+    "@makehq/sdk": "1.9.0",
     "@n8n/node-cli": "0.54.6",
     "@pipedream/platform": "3.4.0",
     "@types/node": "22.19.1",
