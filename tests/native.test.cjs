@@ -72,3 +72,22 @@ test('Zapier consumes native Headers and requires write identity in its editor',
   }
   assert.equal(zapier.creates.apiRequest.operation.inputFields.find(f => f.key === 'idempotencyKey').required, false);
 });
+
+test('Zapier routes real throttling middleware through shared parsing and its native retry error', async () => {
+  const middleware = require('zapier-platform-core/src/http-middlewares/after/throw-for-throttling');
+  const errors = require('zapier-platform-core/src/errors');
+  const response = request => ({ request, status: 429, headers: new Headers({ 'Retry-After': '12' }), content: '{"error":{"code":"rate_limited"}}' });
+  assert.throws(() => middleware(response({})), e => e.name === 'ThrottledError');
+  const z = { errors, request: async request => middleware(response(request)) };
+  for (const [action, inputData] of [['sendText', input], ['listNumbers', {}]]) {
+    await assert.rejects(zapier.creates[action].operation.perform(z, { authData: auth, inputData }), e => e.name === 'ThrottledError' && JSON.parse(e.message).delay === 12 && JSON.parse(e.message).message.includes('rate_limited'));
+  }
+});
+
+test('Zapier editor permits removal and sends an explicit empty reaction when the field is omitted', async () => {
+  assert.equal(zapier.creates.react.operation.inputFields.find(f => f.key === 'reaction').required, false);
+  let body;
+  await zapier.creates.react.operation.perform({ request: async r => { body = r.body; return { status: 200, content: '{"data":{}}', headers: {} }; } }, { authData: auth, inputData: { ...input, messageId: '739182640518205' } });
+  assert.equal(body.reaction, '');
+  for (const trigger of Object.values(zapier.triggers)) assert.equal(trigger.operation.inputFields.find(f => f.key === 'registrationKey').required, true);
+});

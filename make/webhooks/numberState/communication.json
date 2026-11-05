@@ -5,11 +5,5 @@
     "type": "json",
     "body": {}
   },
-  "output": {
-    "id": "{{body.id}}",
-    "session": "{{body.session}}",
-    "timestamp": "{{body.timestamp}}",
-    "event": "{{body.event}}",
-    "payload": "{{body.payload}}"
-  }
+  "output": "{{polymorfaEnvelope(body; 'numberState')}}"
 }

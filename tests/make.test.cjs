@@ -45,9 +45,26 @@ test('Make activation keys are independent of receiver secrets and change betwee
   const first = iml.polymorfaCreateKey(marker.key, '11111111-1111-4111-8111-111111111111');
   const second = iml.polymorfaCreateKey(marker.key, '22222222-2222-4222-8222-222222222222');
   assert.notEqual(first, second); assert.ok(!first.includes(marker.value));
+  assert.equal(first, hooks.creationKey(marker.key, '11111111-1111-4111-8111-111111111111'));
+  assert.equal(first, iml.polymorfaCreateKey(marker.key, '11111111-1111-4111-8111-111111111111'));
   assert.throws(() => iml.polymorfaCreateKey(marker.key, ''));
   const base = JSON.parse(readFileSync('make/base.json'));
   for (const path of ['request.headers.idempotency-key', 'request.body.headers', 'response.body.data.idempotency.key']) assert.ok(base.log.sanitize.includes(path));
+});
+
+test('Make verifies live creation receipts and maps the optional public QuickLink reference', () => {
+  const marker = iml.polymorfaHook(auth, 'numberState', 'key');
+  const row = { id: 'owned', projectId: auth.projectId, owner: 'project', url: 'https://example.com/', enabled: true, format: 'native', headers: [{ name: marker.name }], eventTypes: ['session.status', 'session.connected', 'session.logged_out'] };
+  const args = [auth, row.url, 'numberState', 'key', 'owned'];
+  assert.equal(iml.polymorfaLiveHook({ data: [row], page: { hasMore: false } }, ...args), 'owned');
+  assert.throws(() => iml.polymorfaLiveHook({ data: [], page: { hasMore: false } }, ...args));
+  assert.throws(() => iml.polymorfaLiveHook({ data: [{ ...row, id: 'different' }], page: { hasMore: false } }, ...args));
+  const sample = { ...require('../fixtures/events.json').numberState, externalId: 'synthetic-order-reference', transportSecret: 'must-not-escape' };
+  assert.deepEqual(JSON.parse(JSON.stringify(iml.polymorfaEnvelope(sample, 'numberState'))), hooks.envelope(sample, 'numberState'));
+  const attach = JSON.parse(readFileSync('make/webhooks/numberState/attach.json'));
+  assert.ok(attach[1].headers['Idempotency-Key'].includes('parameters.registrationKey'));
+  assert.ok(attach[2].response.data.externalHookId.includes('polymorfaLiveHook'));
+  assert.equal(JSON.parse(readFileSync('make/modules/react/parameters.json')).find(p => p.name === 'reaction').required, false);
 });
 
 test('Make detach only deletes owned IDs in a complete successful inventory', () => {

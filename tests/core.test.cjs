@@ -12,6 +12,22 @@ const now = Date.parse('2026-11-01T12:00:00Z');
 const auth = { apiKey: 'synthetic-project-token-not-a-credential', projectId: '11111111-1111-4111-8111-111111111111' };
 const input = { session: '739182640518203', recipientType: 'id', recipient: '9007199254740993123', text: 'An order is ready.', idempotencyKey: 'order-123-notification-1', writeCreatedAt: '2026-11-01T11:59:00Z' };
 
+test('valid base64 media through the decoded limit does not exhaust the regex stack', () => {
+  for (const size of [core.MAX_MEDIA_BYTES - 2, core.MAX_MEDIA_BYTES - 1, core.MAX_MEDIA_BYTES]) {
+    const media = Buffer.alloc(size).toString('base64');
+    const request = core.buildRequest('sendMedia', { ...input, mediaType: 'file', mediaSource: 'base64', media }, auth, 'test', now);
+    assert.equal(request.body.content.file.base64, media);
+  }
+  for (const media of ['A===', 'AA=A', 'AAA', 'A A=', Buffer.alloc(core.MAX_MEDIA_BYTES + 1).toString('base64')]) {
+    assert.throws(() => core.buildRequest('sendMedia', { ...input, mediaType: 'file', mediaSource: 'base64', media }, auth, 'test', now), e => e.code === 'invalid_or_oversized_media');
+  }
+});
+
+test('native empty or omitted reactions remove a reaction while invalid values are refused', () => {
+  for (const reaction of ['', undefined, null]) assert.equal(core.buildRequest('react', { ...input, messageId: '9007199254740993124', reaction }, auth, 'test', now).body.reaction, '');
+  assert.throws(() => core.buildRequest('react', { ...input, messageId: '9007199254740993124', reaction: 1 }, auth, 'test', now), e => e.code === 'invalid_reaction');
+});
+
 test('non-JSON gateway failures retain uncertain-write recovery and safe retry metadata', () => {
   assert.throws(() => core.parseResponse({ status: 502, headers: { 'retry-after': '8' }, body: '<html>upstream unavailable</html>' }), e => e.code === 'outcome_unknown' && e.retryAfter === 8 && /Reconcile/.test(e.message));
   assert.throws(() => core.parseResponse({ status: 200, body: '<html>not JSON</html>' }), e => e.code === 'invalid_response');

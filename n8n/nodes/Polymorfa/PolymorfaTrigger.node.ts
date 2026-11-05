@@ -14,6 +14,7 @@ export class PolymorfaTrigger implements INodeType {
     properties: [
       { displayName: 'Event', name: 'eventGroup', type: 'options', default: 'messageReceived', options: Object.entries(events).map(([value, event]) => ({ name: event.label, value, description: event.description })) },
       { displayName: 'Subscription Key', name: 'subscriptionKey', type: 'string', required: true, default: '', description: 'A unique stable label for this trigger. Keep it on reactivation; use a different value for another trigger.' },
+      { displayName: 'Webhook Creation Key', name: 'registrationKey', type: 'string', required: true, default: '', description: 'Save a unique key for this registration and reuse it for uncertain retries. After confirmed deletion, use a new key for the next registration.' },
       { displayName: 'Events are project-wide. Filtering after receipt does not limit which Numbers disclose events to n8n.', name: 'scopeNotice', type: 'notice', default: '' },
     ],
   };
@@ -27,7 +28,7 @@ export class PolymorfaTrigger implements INodeType {
     },
     async create(this: IHookFunctions) {
       const auth = await this.getCredentials('polymorfaApi');
-      const hook = await subscribe(auth, this.getNodeWebhookUrl('default')!, this.getNodeParameter('eventGroup') as string, this.getNodeParameter('subscriptionKey') as string, transport(this), 'n8n');
+      const hook = await subscribe(auth, this.getNodeWebhookUrl('default')!, this.getNodeParameter('eventGroup') as string, this.getNodeParameter('subscriptionKey') as string, transport(this), 'n8n', this.getNodeParameter('registrationKey') as string);
       this.getWorkflowStaticData('node').subscription = hook; return true;
     },
     async delete(this: IHookFunctions) {

@@ -7,14 +7,7 @@
     },
     "response": {
       "temp": {
-        "ownedId": "{{polymorfaFindHook(body; connection; webhook.url; 'callEnded'; parameters.subscriptionKey)}}",
-        "activationId": "{{uuid}}"
-      },
-      "data": {
-        "externalHookId": "{{temp.ownedId}}",
-        "ownedUrl": "{{webhook.url}}",
-        "receiverName": "{{get(polymorfaHook(connection; 'callEnded'; parameters.subscriptionKey); 'name')}}",
-        "receiverValue": "{{get(polymorfaHook(connection; 'callEnded'; parameters.subscriptionKey); 'value')}}"
+        "ownedId": "{{polymorfaFindHook(body; connection; webhook.url; 'callEnded'; parameters.subscriptionKey)}}"
       }
     }
   },
@@ -23,7 +16,7 @@
     "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks",
     "method": "POST",
     "headers": {
-      "Idempotency-Key": "{{polymorfaCreateKey(get(polymorfaHook(connection; 'callEnded'; parameters.subscriptionKey); 'key'); temp.activationId)}}"
+      "Idempotency-Key": "{{polymorfaCreateKey(get(polymorfaHook(connection; 'callEnded'; parameters.subscriptionKey); 'key'); parameters.registrationKey)}}"
     },
     "body": {
       "url": "{{webhook.url}}",
@@ -40,8 +33,20 @@
       ]
     },
     "response": {
+      "temp": {
+        "createdId": "{{body.data.webhook.id}}"
+      }
+    }
+  },
+  {
+    "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks",
+    "method": "GET",
+    "qs": {
+      "limit": 100
+    },
+    "response": {
       "data": {
-        "externalHookId": "{{body.data.webhook.id}}",
+        "externalHookId": "{{polymorfaLiveHook(body; connection; webhook.url; 'callEnded'; parameters.subscriptionKey; ifempty(temp.ownedId; temp.createdId))}}",
         "ownedUrl": "{{webhook.url}}",
         "receiverName": "{{get(polymorfaHook(connection; 'callEnded'; parameters.subscriptionKey); 'name')}}",
         "receiverValue": "{{get(polymorfaHook(connection; 'callEnded'; parameters.subscriptionKey); 'value')}}"

@@ -42,7 +42,7 @@ function messageBody(action, p) {
       // Enforce HTTPS/no embedded credentials here; the API validates/fetches the URI.
       const address = p.media.match(/^https:\/\/([^/?#]+)(?:[/?#]|$)/i);
       if (!address || /[\s\\\x00-\x1f\x7f]/.test(p.media) || address[1].includes('@')) throw new IntegrationError('invalid_media_url');
-    } else if (p.media.length > Math.ceil(MAX_MEDIA_BYTES / 3) * 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(p.media) || Buffer.from(p.media, 'base64').length > MAX_MEDIA_BYTES) {
+    } else if (p.media.length > Math.ceil(MAX_MEDIA_BYTES / 3) * 4 || p.media.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(p.media) || Buffer.from(p.media, 'base64').length > MAX_MEDIA_BYTES) {
       throw new IntegrationError('invalid_or_oversized_media');
     }
     const media = { [p.mediaSource]: p.media };
@@ -50,8 +50,9 @@ function messageBody(action, p) {
     if (p.mediaType === 'file' && p.filename) media.filename = required(p.filename, 'filename');
     body.content = { [p.mediaType]: media };
   } else if (action === 'react') {
-    if (!/^[1-9]\d{0,18}$/.test(required(p.messageId, 'message_id')) || typeof p.reaction !== 'string') throw new IntegrationError('invalid_reaction');
-    body.id = p.messageId; body.reaction = p.reaction;
+    const reaction = p.reaction ?? '';
+    if (!/^[1-9]\d{0,18}$/.test(required(p.messageId, 'message_id')) || typeof reaction !== 'string') throw new IntegrationError('invalid_reaction');
+    body.id = p.messageId; body.reaction = reaction;
   } else throw new IntegrationError('unknown_action');
   return body;
 }

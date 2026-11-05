@@ -1,6 +1,6 @@
 'use strict';
 
-const { createHmac, timingSafeEqual, randomUUID } = require('node:crypto');
+const { createHmac, timingSafeEqual } = require('node:crypto');
 const { events } = require('./catalog.cjs');
 const { ORIGIN, headers, segment, required, parseResponse, IntegrationError } = require('./core.cjs');
 function identity(auth, group, subscriptionKey) {
@@ -18,6 +18,11 @@ function callback(url) {
 }
 function sameCallback(a, b) {
   try { return callback(a) === callback(b); } catch { return false; }
+}
+function creationKey(markerKey, registrationKey) {
+  required(registrationKey, 'registration_key');
+  if (registrationKey.length > 200) throw new IntegrationError('invalid_registration_key');
+  return 'integration-create-' + createHmac('sha256', markerKey).update(registrationKey).digest('hex');
 }
 function owns(hook, auth, url, group, subscriptionKey, recordedMarker) {
   const marker = (recordedMarker || identity(auth, group, subscriptionKey).name).toLowerCase();
@@ -53,18 +58,22 @@ async function find(auth, url, group, subscriptionKey, transport, provider) {
   }
   throw new IntegrationError('subscription_inventory_requires_reconciliation');
 }
-async function subscribe(auth, url, group, subscriptionKey, transport, provider) {
+async function subscribe(auth, url, group, subscriptionKey, transport, provider, registrationKey) {
   url = callback(url);
-  const record = hook => ({ id: hook.id, url, group, subscriptionKey, markerName: identity(auth, group, subscriptionKey).name });
+  const marker = identity(auth, group, subscriptionKey);
+  const createKey = creationKey(marker.key, registrationKey);
+  const record = hook => ({ id: hook.id, url, group, subscriptionKey, markerName: marker.name });
   const existing = await find(auth, url, group, subscriptionKey, transport, provider);
   if (existing) return record(existing);
-  const marker = identity(auth, group, subscriptionKey);
   // Only the owned ID leaves this helper. The API's one-time signing secret is never emitted.
   try {
-    // One create invocation owns its key. A later activation must not replay a deleted hook.
-    const r = await call(auth, transport, provider, 'POST', `/platform/projects/${segment(auth.projectId, 'project_id')}/webhooks`, { url, eventTypes: events[group].types, format: 'native', enabled: true, headers: [{ name: marker.name, value: marker.value }] }, `integration-create-${marker.key}-${randomUUID()}`);
+    // Saved trigger configuration owns this generation across uncertain retries.
+    const r = await call(auth, transport, provider, 'POST', `/platform/projects/${segment(auth.projectId, 'project_id')}/webhooks`, { url, eventTypes: events[group].types, format: 'native', enabled: true, headers: [{ name: marker.name, value: marker.value }] }, createKey);
     if (!owns(r.data?.webhook, auth, url, group, subscriptionKey)) throw new IntegrationError('invalid_subscription_receipt');
-    return record(r.data.webhook);
+    // An idempotency receipt may outlive its deleted webhook. Verify live ownership.
+    const live = await find(auth, url, group, subscriptionKey, transport, provider);
+    if (!live || live.id !== r.data.webhook.id) throw new IntegrationError('subscription_receipt_requires_reconciliation');
+    return record(live);
   } catch (error) {
     if (error instanceof IntegrationError && error.status >= 400 && error.status < 500) throw error;
     // A lost response may follow a successful create. Reconcile; never blindly create again.
@@ -91,6 +100,6 @@ function authenticate(auth, group, subscriptionKey, incomingHeaders) {
 function envelope(body, group) {
   if (!events[group] || !body || typeof body !== 'object' || Array.isArray(body) || typeof body.id !== 'string' || !body.id || typeof body.session !== 'string' || !body.session || typeof body.timestamp !== 'string' || !Number.isFinite(Date.parse(body.timestamp)) || !events[group].types.includes(body.event) || !body.payload || typeof body.payload !== 'object' || Array.isArray(body.payload)) throw new IntegrationError('invalid_event');
   // Copy the defined envelope only. Never export arbitrary top-level transport fields.
-  return { id: body.id, session: body.session, timestamp: body.timestamp, event: body.event, payload: body.payload };
+  return { id: body.id, session: body.session, ...(typeof body.externalId === 'string' ? { externalId: body.externalId } : {}), timestamp: body.timestamp, event: body.event, payload: body.payload };
 }
-module.exports = { identity, callback, sameCallback, owns, find, subscribe, unsubscribe, authenticate, envelope };
+module.exports = { identity, callback, sameCallback, creationKey, owns, find, subscribe, unsubscribe, authenticate, envelope };

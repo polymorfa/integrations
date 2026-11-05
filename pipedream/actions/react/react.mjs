@@ -44,8 +44,8 @@ export default {
   "reaction": {
     "type": "string",
     "label": "Reaction",
-    "optional": false,
-    "description": "An emoji, or an empty string to remove the reaction."
+    "optional": true,
+    "description": "An emoji. Leave empty to remove the reaction."
   },
   "idempotencyKey": {
     "type": "string",

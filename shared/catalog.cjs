@@ -25,7 +25,7 @@ const fields = {
   caption: { label: 'Caption' },
   filename: { label: 'Filename', help: 'Used for file messages.' },
   messageId: { label: 'Message ID', required: true },
-  reaction: { label: 'Reaction', required: true, help: 'An emoji, or an empty string to remove the reaction.' },
+  reaction: { label: 'Reaction', help: 'An emoji. Leave empty to remove the reaction.' },
   idempotencyKey: { label: 'Idempotency Key', help: 'Required for writes. Map a stable business key unique to this write. Preserve it across retries.' },
   writeCreatedAt: { label: 'Write Started At', help: 'Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes older than 23 hours require reconciliation.' },
   projectSlug: { label: 'Project Slug', required: true },

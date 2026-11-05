@@ -44,8 +44,8 @@
     "name": "reaction",
     "type": "text",
     "label": "Reaction",
-    "required": true,
-    "help": "An emoji, or an empty string to remove the reaction."
+    "required": false,
+    "help": "An emoji. Leave empty to remove the reaction."
   },
   {
     "name": "idempotencyKey",

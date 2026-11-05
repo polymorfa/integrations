@@ -16,7 +16,7 @@ export default {
       };
     },
     execute($, action, input) { return core.execute(action, input, this.auth(), this.transport($), 'pipedream'); },
-    subscribe($, url, group, key) { return hooks.subscribe(this.auth(), url, group, key, this.transport($), 'pipedream'); },
+    subscribe($, url, group, key, registrationKey) { return hooks.subscribe(this.auth(), url, group, key, this.transport($), 'pipedream', registrationKey); },
     unsubscribe($, owned) { return hooks.unsubscribe(this.auth(), owned.id, owned.url, owned.group, owned.subscriptionKey, this.transport($), 'pipedream', owned.markerName); },
     authenticate(group, key, headers) { return hooks.authenticate(this.auth(), group, key, headers); },
     envelope(body, group) { return hooks.envelope(body, group); },
