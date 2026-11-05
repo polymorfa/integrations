@@ -89,3 +89,39 @@ test('editor samples match their public event schemas', () => {
     assert.ok(validate(sample), `${group}: ${JSON.stringify(validate.errors)}`);
   }
 });
+
+test('public marker and create keys do not reveal receiver verifier material', () => {
+  const marker = hooks.identity(auth, 'messageReceived', key);
+  assert.notEqual(marker.key, marker.value);
+  assert.ok(!marker.name.includes(marker.value.slice(0, 24)));
+});
+
+test('reactivating a deleted hook uses a new create identity', async () => {
+  const s = server(); const transport = s.request.bind(s);
+  const first = await hooks.subscribe(auth, url, 'messageReceived', key, transport, 'test');
+  await hooks.unsubscribe(auth, first.id, url, 'messageReceived', key, transport, 'test');
+  await hooks.subscribe(auth, url, 'messageReceived', key, transport, 'test');
+  const requests = s.calls.filter(r => r.method === 'POST');
+  assert.equal(requests.length, 2);
+  assert.notEqual(requests[0].headers['Idempotency-Key'], requests[1].headers['Idempotency-Key']);
+  assert.ok(requests.every(r => !r.headers['Idempotency-Key'].includes(hooks.identity(auth, 'messageReceived', key).value)));
+});
+
+test('callback normalization preserves ownership across activation and cleanup', async () => {
+  const s = server(); const transport = s.request.bind(s);
+  const first = await hooks.subscribe(auth, 'https://EXAMPLE.COM:443', 'messageReceived', key, transport, 'test');
+  assert.equal(s.rows[0].url, 'https://example.com/');
+  assert.deepEqual(await hooks.subscribe(auth, 'https://example.com/', 'messageReceived', key, transport, 'test'), first);
+  await hooks.unsubscribe(auth, first.id, 'https://EXAMPLE.COM:443', 'messageReceived', key, transport, 'test');
+  assert.equal(s.rows.length, 0);
+  assert.equal(hooks.sameCallback(url + '?key=A', url + '?key=a'), false);
+});
+
+for (const status of [403, 422, 429]) test(`definite subscription rejection ${status} preserves its error and retry metadata`, async () => {
+  let reads = 0;
+  await assert.rejects(hooks.subscribe(auth, url, 'messageReceived', key, async r => {
+    if (r.method === 'GET') { reads++; return { status: 200, body: { data: [], page: { hasMore: false } } }; }
+    return { status, headers: { 'retry-after': '17', 'x-request-id': 'safe-request' }, body: { error: { code: 'scope_denied' } } };
+  }, 'test'), e => e.status === status && e.code === 'scope_denied' && e.retryAfter === 17 && e.requestId === 'safe-request');
+  assert.equal(reads, 1);
+});

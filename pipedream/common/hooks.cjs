@@ -1,7 +1,7 @@
 // Generated from shared/. Run npm run generate.
 'use strict';
 
-const { createHmac, timingSafeEqual } = require('node:crypto');
+const { createHmac, timingSafeEqual, randomUUID } = require('node:crypto');
 const { events } = require('./catalog.cjs');
 const { ORIGIN, headers, segment, required, parseResponse, IntegrationError } = require('./core.cjs');
 function identity(auth, group, subscriptionKey) {
@@ -9,18 +9,21 @@ function identity(auth, group, subscriptionKey) {
   required(subscriptionKey, 'subscription_key');
   if (subscriptionKey.length > 200) throw new IntegrationError('invalid_subscription_key');
   const scope = JSON.stringify(['polymorfa-webhook-v1', segment(auth.projectId, 'project_id'), group, subscriptionKey]);
-  const secret = createHmac('sha256', required(auth.apiKey, 'project_token')).update(scope).digest('hex');
-  return { name: `X-Polymorfa-Integration-Token-${secret.slice(0, 24)}`, value: secret, key: secret };
+  const derive = label => createHmac('sha256', required(auth.apiKey, 'project_token')).update(`${label}:${scope}`).digest('hex');
+  return { name: `X-Polymorfa-Integration-Token-${derive('marker').slice(0, 24)}`, value: derive('receiver'), key: derive('create') };
 }
 function callback(url) {
   let u; try { u = new URL(url); } catch { throw new IntegrationError('invalid_callback'); }
   if (u.protocol !== 'https:' || u.username || u.password || u.hash) throw new IntegrationError('invalid_callback');
-  return url;
+  return u.href;
+}
+function sameCallback(a, b) {
+  try { return callback(a) === callback(b); } catch { return false; }
 }
 function owns(hook, auth, url, group, subscriptionKey, recordedMarker) {
   const marker = (recordedMarker || identity(auth, group, subscriptionKey).name).toLowerCase();
   const types = events[group].types;
-  return hook && hook.owner === 'project' && hook.projectId === auth.projectId && hook.url === url && hook.format === 'native' && hook.enabled === true &&
+  return hook && hook.owner === 'project' && hook.projectId === auth.projectId && sameCallback(hook.url, url) && hook.format === 'native' && hook.enabled === true &&
     Array.isArray(hook.headers) && hook.headers.some(h => h.name.toLowerCase() === marker) && Array.isArray(hook.eventTypes) &&
     hook.eventTypes.length === types.length && types.every(t => hook.eventTypes.includes(t));
 }
@@ -36,10 +39,10 @@ async function find(auth, url, group, subscriptionKey, transport, provider) {
     const r = await call(auth, transport, provider, 'GET', `/platform/projects/${segment(auth.projectId, 'project_id')}/webhooks`, undefined, undefined, { limit: 100, ...(cursor ? { cursor } : {}) });
     if (!Array.isArray(r.data)) throw new IntegrationError('invalid_subscription_response');
     const marker = identity(auth, group, subscriptionKey).name.toLowerCase();
-    if (r.data.some(h => h.url !== url && h.headers?.some(v => v.name.toLowerCase() === marker))) throw new IntegrationError('subscription_key_already_in_use');
+    if (r.data.some(h => !sameCallback(h.url, url) && h.headers?.some(v => v.name.toLowerCase() === marker))) throw new IntegrationError('subscription_key_already_in_use');
     for (const hook of r.data) {
       const marked = hook.headers?.some(v => v.name.toLowerCase() === marker);
-      if ((marked || hook.url === url) && !owns(hook, auth, url, group, subscriptionKey)) throw new IntegrationError('subscription_changed_requires_reconciliation');
+      if ((marked || sameCallback(hook.url, url)) && !owns(hook, auth, url, group, subscriptionKey)) throw new IntegrationError('subscription_changed_requires_reconciliation');
       if (owns(hook, auth, url, group, subscriptionKey)) matches.push(hook);
     }
     if (!r.page?.hasMore) {
@@ -52,17 +55,19 @@ async function find(auth, url, group, subscriptionKey, transport, provider) {
   throw new IntegrationError('subscription_inventory_requires_reconciliation');
 }
 async function subscribe(auth, url, group, subscriptionKey, transport, provider) {
-  callback(url);
+  url = callback(url);
   const record = hook => ({ id: hook.id, url, group, subscriptionKey, markerName: identity(auth, group, subscriptionKey).name });
   const existing = await find(auth, url, group, subscriptionKey, transport, provider);
   if (existing) return record(existing);
   const marker = identity(auth, group, subscriptionKey);
   // Only the owned ID leaves this helper. The API's one-time signing secret is never emitted.
   try {
-    const r = await call(auth, transport, provider, 'POST', `/platform/projects/${segment(auth.projectId, 'project_id')}/webhooks`, { url, eventTypes: events[group].types, format: 'native', enabled: true, headers: [{ name: marker.name, value: marker.value }] }, `integration-create-${marker.key}`);
+    // One create invocation owns its key. A later activation must not replay a deleted hook.
+    const r = await call(auth, transport, provider, 'POST', `/platform/projects/${segment(auth.projectId, 'project_id')}/webhooks`, { url, eventTypes: events[group].types, format: 'native', enabled: true, headers: [{ name: marker.name, value: marker.value }] }, `integration-create-${marker.key}-${randomUUID()}`);
     if (!owns(r.data?.webhook, auth, url, group, subscriptionKey)) throw new IntegrationError('invalid_subscription_receipt');
     return record(r.data.webhook);
-  } catch {
+  } catch (error) {
+    if (error instanceof IntegrationError && error.status >= 400 && error.status < 500) throw error;
     // A lost response may follow a successful create. Reconcile; never blindly create again.
     const recovered = await find(auth, url, group, subscriptionKey, transport, provider);
     if (recovered) return record(recovered);
@@ -89,4 +94,4 @@ function envelope(body, group) {
   // Copy the defined envelope only. Never export arbitrary top-level transport fields.
   return { id: body.id, session: body.session, timestamp: body.timestamp, event: body.event, payload: body.payload };
 }
-module.exports = { identity, callback, owns, find, subscribe, unsubscribe, authenticate, envelope };
+module.exports = { identity, callback, sameCallback, owns, find, subscribe, unsubscribe, authenticate, envelope };

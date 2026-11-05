@@ -11,6 +11,11 @@ ajv.addSchema(spec, 'messaging');
 const now = Date.parse('2026-11-01T12:00:00Z');
 const auth = { apiKey: 'synthetic-project-token-not-a-credential', projectId: '11111111-1111-4111-8111-111111111111' };
 const input = { session: '739182640518203', recipientType: 'id', recipient: '9007199254740993123', text: 'An order is ready.', idempotencyKey: 'order-123-notification-1', writeCreatedAt: '2026-11-01T11:59:00Z' };
+
+test('non-JSON gateway failures retain uncertain-write recovery and safe retry metadata', () => {
+  assert.throws(() => core.parseResponse({ status: 502, headers: { 'retry-after': '8' }, body: '<html>upstream unavailable</html>' }), e => e.code === 'outcome_unknown' && e.retryAfter === 8 && /Reconcile/.test(e.message));
+  assert.throws(() => core.parseResponse({ status: 200, body: '<html>not JSON</html>' }), e => e.code === 'invalid_response');
+});
 test('text/reply preserves opaque IDs, version, credential and logical-write identity', () => {
   const r = core.buildRequest('sendText', { ...input, quotedMessageId: '9007199254740993124' }, auth, 'test', now);
   assert.equal(r.url, 'https://api.polymorfa.com/messaging/739182640518203/messages/send');

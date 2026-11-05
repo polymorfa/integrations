@@ -48,6 +48,18 @@ npm trusted publisher before use. No provider account, environment protection or
 trusted publisher has been configured by adding this workflow. Review is still
 required; the gate is bookkeeping and does not authenticate human authorization.
 
+Publication accepts only a `main` dispatch, checks out its immutable commit, and
+requires the dispatch's reviewed-source commit to match the release receipt and
+its executable files. Restrict the `npm-release` environment to protected `main`
+and require an independent release reviewer before enabling the trusted publisher.
+These external settings cannot be secured by editable workflow code alone.
+
+Webhook marker names, receiver verifiers and create-key seeds now use separate
+HMAC domains. Each new activation adds its own nonce to the create key so a
+deleted hook cannot be recovered from an old create receipt. This is a change
+before the first release; remove old development subscriptions with their recorded
+ownership metadata before recreating them. No production migration is implied.
+
 Keep API credentials in each provider's credential store. Webhook receivers use
 an authenticated per-subscription header supported by the public subscription
 contract. A stable unique subscription key determines its private verifier.

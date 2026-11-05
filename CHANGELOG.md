@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Separate webhook receiver secrets from public marker/idempotency metadata;
+  use a fresh create identity after a deleted subscription.
+- Preserve definite subscription errors and non-JSON uncertain outcomes;
+  normalize callback ownership and native Zapier response headers.
+- Keep successful n8n batch items when Continue On Fail is enabled. Require
+  saved notification identities before recipe sends and write identities in Zapier.
+- Restrict n8n publication dispatch to main and bind its reviewed source receipt.
+
 - First-party source for n8n, Make, Zapier and Pipedream with a common public API
   and SDK contract pin.
 - Text/replies, templates, URL/base64 media, reactions, Number/template lookup

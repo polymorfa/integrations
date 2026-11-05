@@ -7,7 +7,8 @@ const hooks = require('./shared/hooks.cjs');
 function transport(z) {
   return async r => {
     const response = await z.request({ method: r.method, url: r.url, headers: r.headers, params: r.query, body: r.body, redirect: 'manual', skipThrowForStatus: true });
-    return { status: response.status, headers: response.headers, body: response.content };
+    const headers = typeof response.headers?.entries === 'function' ? Object.fromEntries(response.headers.entries()) : response.headers;
+    return { status: response.status, headers, body: response.content };
   };
 }
 function field(name) {
@@ -17,7 +18,7 @@ function field(name) {
 const creates = Object.fromEntries(Object.entries(actions).map(([key, action]) => [key, {
   key, noun: 'Result', display: { label: action.label, description: action.description },
   operation: {
-    inputFields: action.fields.map(field),
+    inputFields: action.fields.map(name => ({ ...field(name), ...(key !== 'apiRequest' && ['idempotencyKey', 'writeCreatedAt'].includes(name) ? { required: true } : {}) })),
     async perform(z, bundle) { return core.execute(key, bundle.inputData, bundle.authData, transport(z), 'zapier'); },
     sample: { data: { id: '739182640518203' } },
   },

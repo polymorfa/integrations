@@ -11,7 +11,10 @@ function safeCode(v, fallback) { return typeof v === 'string' && /^[a-zA-Z0-9_-]
 function parseResponse(response) {
   const status = response.status;
   let body = response.body;
-  try { if (typeof body === 'string') body = JSON.parse(body); } catch { throw new IntegrationError('invalid_response', status); }
+  try { if (typeof body === 'string') body = JSON.parse(body); } catch {
+    if (status >= 200 && status < 300) throw new IntegrationError('invalid_response', status);
+    body = undefined;
+  }
   if (status < 200 || status >= 300) {
     const code = safeCode(body?.error?.code, status >= 500 ? 'outcome_unknown' : status >= 300 && status < 400 ? 'redirect_refused' : 'request_failed');
     const h = Object.fromEntries(Object.entries(response.headers || {}).map(([k, v]) => [k.toLowerCase(), String(v)]));

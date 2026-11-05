@@ -6,10 +6,15 @@ on:
         description: Reviewed package version
         required: true
         type: string
+      reviewed-source:
+        description: Immutable reviewed source commit from the approved release receipt
+        required: true
+        type: string
 permissions:
   contents: read
 jobs:
   publish:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: npm-release
     permissions:
@@ -19,6 +24,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
@@ -31,4 +38,7 @@ jobs:
       - run: node scripts/release-gate.mjs
         env:
           RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_REVIEWED_SOURCE: ${{ inputs.reviewed-source }}
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_SOURCE: ${{ github.sha }}
       - run: npm publish --workspace n8n-nodes-polymorfa --provenance --access public

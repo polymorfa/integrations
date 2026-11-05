@@ -44,7 +44,7 @@ for (const [kind, pin] of Object.entries(source.specs)) {
         compare(local.components[section]?.[name], sdk.components?.[section]?.[name], `${kind}:${v.$ref}`);
       }
       Object.values(v).forEach(visit);
-    }; visit(a);
+    }; visit(a); visit(b);
   };
   for (const item of Object.values(coverage.operations).filter(v => v.contract === kind)) compare(local.paths[item.path][item.method.toLowerCase()], sdk.paths?.[item.path]?.[item.method.toLowerCase()], `${item.method} ${item.path}`);
 }

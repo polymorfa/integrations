@@ -21,6 +21,6 @@ if (!events[group]) throw new IntegrationError('invalid_event_group');
 required(subscriptionKey, 'subscription_key');
 if (subscriptionKey.length > 200) throw new IntegrationError('invalid_subscription_key');
 const scope = JSON.stringify(['polymorfa-webhook-v1', segment(auth.projectId, 'project_id'), group, subscriptionKey]);
-const secret = iml.sha256(scope, 'hex', auth.apiKey);
-return { name: 'X-Polymorfa-Integration-Token-' + secret.slice(0, 24), value: secret, key: secret };
+const derive = label => iml.sha256(label + ':' + scope, 'hex', auth.apiKey);
+return { name: 'X-Polymorfa-Integration-Token-' + derive('marker').slice(0, 24), value: derive('receiver'), key: derive('create') };
 }

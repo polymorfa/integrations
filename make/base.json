@@ -8,13 +8,24 @@
   "log": {
     "sanitize": [
       "request.headers.authorization",
+      "request.headers.Authorization",
+      "request.headers.idempotency-key",
+      "request.headers.Idempotency-Key",
       "request.body.headers",
-      "response.body.data.secret"
+      "response.body.data.secret",
+      "response.body.data.idempotency.key"
     ]
   },
   "response": {
     "error": {
-      "message": "[{{statusCode}}] Polymorfa {{body.error.code}}"
+      "409": {
+        "message": "{{polymorfaError(statusCode; headers; body)}}"
+      },
+      "429": {
+        "type": "RateLimitError",
+        "message": "{{polymorfaError(statusCode; headers; body)}}"
+      },
+      "message": "{{polymorfaError(statusCode; headers; body)}}"
     }
   }
 }

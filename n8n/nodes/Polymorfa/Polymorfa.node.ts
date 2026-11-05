@@ -52,6 +52,10 @@ export class Polymorfa implements INodeType {
         const data = await execute(action, p, auth, transport(this), 'n8n');
         result.push({ json: data, pairedItem: { item: i } });
       } catch (error) {
+        if (this.continueOnFail()) {
+          result.push({ json: { error: error instanceof Error ? error.message : 'Polymorfa request failed.' }, pairedItem: { item: i } });
+          continue;
+        }
         throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
       }
     }

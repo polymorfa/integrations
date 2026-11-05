@@ -7,7 +7,8 @@
     },
     "response": {
       "temp": {
-        "ownedId": "{{polymorfaFindHook(body; connection; webhook.url; 'messageReceived'; parameters.subscriptionKey)}}"
+        "ownedId": "{{polymorfaFindHook(body; connection; webhook.url; 'messageReceived'; parameters.subscriptionKey)}}",
+        "activationId": "{{uuid}}"
       },
       "data": {
         "externalHookId": "{{temp.ownedId}}",
@@ -22,7 +23,7 @@
     "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks",
     "method": "POST",
     "headers": {
-      "Idempotency-Key": "integration-create-{{get(polymorfaHook(connection; 'messageReceived'; parameters.subscriptionKey); 'key')}}"
+      "Idempotency-Key": "{{polymorfaCreateKey(get(polymorfaHook(connection; 'messageReceived'; parameters.subscriptionKey); 'key'); temp.activationId)}}"
     },
     "body": {
       "url": "{{webhook.url}}",

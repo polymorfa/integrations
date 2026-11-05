@@ -48,3 +48,27 @@ test('Zapier native hook uses stable event IDs and synthetic setup samples witho
   assert.equal((await operation.performList(z, bundle))[0].id, sample.id); assert.equal(requests, 0);
   await assert.rejects(operation.perform(z, { ...bundle, cleanedRequest: { headers: {}, content: sample } }));
 });
+
+test('n8n continue-on-fail retains successful write results and continues later items', async () => {
+  let requests = 0;
+  const items = [{ json: {} }, { json: {} }, { json: {} }];
+  const context = { getCredentials: async () => auth, getInputData: () => items, continueOnFail: () => true,
+    getNodeParameter: (key, i, fallback) => key === 'recipient' && i === 1 ? 'invalid-conversation-id' : input[key] ?? fallback,
+    getNode: () => ({ name: 'test', typeVersion: 1 }),
+    helpers: { httpRequest: async () => ({ statusCode: 200, headers: {}, body: { data: { id: String(++requests) } } }) } };
+  const [result] = await new Polymorfa().execute.call(context);
+  assert.equal(requests, 2); assert.equal(result.length, 3);
+  assert.equal(result[0].json.data.id, '1'); assert.equal(result[2].json.data.id, '2');
+  assert.match(result[1].json.error, /invalid_conversation_id/); assert.deepEqual(result[1].pairedItem, { item: 1 });
+  context.continueOnFail = () => false;
+  await assert.rejects(new Polymorfa().execute.call(context));
+});
+
+test('Zapier consumes native Headers and requires write identity in its editor', async () => {
+  const z = { request: async () => ({ status: 429, headers: new Headers({ 'Retry-After': '12', 'X-Request-ID': 'safe-request' }), content: '{}' }) };
+  await assert.rejects(zapier.creates.sendText.operation.perform(z, { authData: auth, inputData: input }), e => e.retryAfter === 12 && e.requestId === 'safe-request');
+  for (const key of ['sendText', 'sendTemplate', 'sendMedia', 'react']) for (const name of ['idempotencyKey', 'writeCreatedAt']) {
+    assert.equal(zapier.creates[key].operation.inputFields.find(f => f.key === name).required, true);
+  }
+  assert.equal(zapier.creates.apiRequest.operation.inputFields.find(f => f.key === 'idempotencyKey').required, false);
+});

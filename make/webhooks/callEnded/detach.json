@@ -1,16 +1,18 @@
 [
   {
-    "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks/{{polymorfaSegment(webhook.externalHookId)}}",
+    "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks",
     "method": "GET",
+    "qs": {
+      "limit": 100
+    },
     "response": {
       "temp": {
-        "gone": "{{statusCode = 404}}"
-      },
-      "valid": "{{if(statusCode = 404; true; polymorfaOwnedHook(body; connection.projectId; webhook.ownedUrl; webhook.receiverName; 'callEnded'))}}"
+        "ownedPresent": "{{polymorfaDetachHook(body; webhook.externalHookId; connection.projectId; webhook.ownedUrl; webhook.receiverName; 'callEnded')}}"
+      }
     }
   },
   {
-    "condition": "{{!temp.gone}}",
+    "condition": "{{temp.ownedPresent}}",
     "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks/{{polymorfaSegment(webhook.externalHookId)}}",
     "method": "DELETE",
     "headers": {

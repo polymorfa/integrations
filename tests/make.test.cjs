@@ -39,3 +39,33 @@ test('Make preserves an operator-disabled owned hook', () => {
   const row = { id: 'owned', owner: 'project', projectId: auth.projectId, url: 'https://example.com', enabled: false, format: 'native', headers: [{ name: marker.name }], eventTypes: ['message.received'] };
   assert.throws(() => iml.polymorfaFindHook({ data: [row], page: { hasMore: false } }, auth, row.url, 'messageReceived', 'key'));
 });
+
+test('Make activation keys are independent of receiver secrets and change between activations', () => {
+  const marker = iml.polymorfaHook(auth, 'messageReceived', 'key');
+  const first = iml.polymorfaCreateKey(marker.key, '11111111-1111-4111-8111-111111111111');
+  const second = iml.polymorfaCreateKey(marker.key, '22222222-2222-4222-8222-222222222222');
+  assert.notEqual(first, second); assert.ok(!first.includes(marker.value));
+  assert.throws(() => iml.polymorfaCreateKey(marker.key, ''));
+  const base = JSON.parse(readFileSync('make/base.json'));
+  for (const path of ['request.headers.idempotency-key', 'request.body.headers', 'response.body.data.idempotency.key']) assert.ok(base.log.sanitize.includes(path));
+});
+
+test('Make detach only deletes owned IDs in a complete successful inventory', () => {
+  const marker = iml.polymorfaHook(auth, 'messageReceived', 'key');
+  const row = { id: 'owned', owner: 'project', projectId: auth.projectId, url: 'https://EXAMPLE.COM:443', format: 'native', headers: [{ name: marker.name }], eventTypes: ['message.received'] };
+  const args = ['owned', auth.projectId, 'https://example.com/', marker.name, 'messageReceived'];
+  assert.equal(iml.polymorfaDetachHook({ data: [], page: { hasMore: false } }, ...args), false);
+  assert.equal(iml.polymorfaDetachHook({ data: [row], page: { hasMore: false } }, ...args), true);
+  assert.throws(() => iml.polymorfaDetachHook({ data: [], page: { hasMore: true } }, ...args));
+  assert.throws(() => iml.polymorfaDetachHook({ data: [{ ...row, projectId: 'other-project' }], page: { hasMore: false } }, ...args));
+  const detach = JSON.parse(readFileSync('make/webhooks/messageReceived/detach.json'));
+  assert.ok(detach[0].url.endsWith('/webhooks')); assert.equal(detach[1].condition, '{{temp.ownedPresent}}');
+});
+
+test('Make non-2xx error handlers retain recovery and rate-limit guidance without response secrets', () => {
+  assert.match(iml.polymorfaError(409, {}, { error: { code: 'idempotency_completed', message: auth.apiKey } }), /Recover its original result/);
+  assert.match(iml.polymorfaError(429, { 'retry-after': '19' }, { error: { code: 'rate_limited' } }), /19 seconds/);
+  assert.match(iml.polymorfaError(502, {}, '<html>gateway error</html>'), /Reconcile/);
+  const error = JSON.parse(readFileSync('make/base.json')).response.error;
+  assert.ok(error['409'].message.includes('polymorfaError')); assert.equal(error['429'].type, 'RateLimitError'); assert.equal(error['5xx'], undefined);
+});

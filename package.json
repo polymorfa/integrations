@@ -13,8 +13,9 @@
     "check:upstream": "node scripts/check-upstream.mjs",
     "check:sdk": "node scripts/verify-sdk.mjs",
     "build": "npm run generate && npm run build --workspace n8n-nodes-polymorfa",
+    "pretest": "npm run build",
     "test": "node --test --test-reporter=spec tests/*.test.cjs tests/*.test.mjs",
-    "check": "npm run check:contracts && npm run check:generated && npm run build && npm test",
+    "check": "npm run check:contracts && npm run check:generated && npm test",
     "validate:zapier": "npm run validate --workspace polymorfa-zapier",
     "make:access": "node scripts/make-access.mjs"
   },

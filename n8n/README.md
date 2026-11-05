@@ -30,6 +30,11 @@ does not contain the original message ID.
 Media accepts HTTPS URLs, base64 or a named n8n binary input field. The connector
 caps decoded bytes at 4 MiB. Provider/API bounds can be lower. IDs remain strings.
 
+With **Continue On Fail** enabled, successful batch items keep their results and
+failed items return an error paired to the original input. Later items continue.
+Use the saved write identity when handling an error; do not replay successful
+items with new keys.
+
 Give each trigger a unique, stable **Subscription Key**. Webhook subscriptions
 are project-wide. Filtering a workflow after receipt does not prevent disclosure
 to n8n. Dedupe by event `id` before downstream effects; repeated delivery is
