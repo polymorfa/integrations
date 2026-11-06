@@ -49,8 +49,11 @@ trusted publisher has been configured by adding this workflow. Review is still
 required; the gate is bookkeeping and does not authenticate human authorization.
 
 Publication accepts only a `main` dispatch, checks out its immutable commit, and
-requires the dispatch's reviewed-source commit to match the release receipt and
-its executable files. Restrict the `npm-release` environment to protected `main`
+requires the dispatch's reviewed-source commit to match the release receipt. Every
+path except `releases/` must match the reviewed source, including tests, `.npmrc`
+and `.nvmrc`. The `verify` job runs the gate before any install or test and has no
+OIDC token. The `publish` job, which has `id-token: write`, repeats the check with
+git and jq before Node setup, `.npmrc` use or any repository script. Restrict the `npm-release` environment to protected `main`
 and require an independent release reviewer before enabling the trusted publisher.
 These external settings cannot be secured by editable workflow code alone.
 

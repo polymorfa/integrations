@@ -13,7 +13,35 @@ on:
 permissions:
   contents: read
 jobs:
+  verify:
+    # Runs repository code, so it never receives an OIDC token.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      # Gate first: nothing else from the repository runs before the source binding is checked.
+      - run: node scripts/release-gate.mjs
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_REVIEWED_SOURCE: ${{ inputs.reviewed-source }}
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_SOURCE: ${{ github.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm install --global npm@11.20.0
+      - run: npm ci --ignore-scripts --no-audit
+      - run: npm run check
+      - run: npm run lint --workspace n8n-nodes-polymorfa
+      - run: npm run check:sdk
   publish:
+    needs: verify
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: npm-release
@@ -26,19 +54,32 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.sha }}
           persist-credentials: false
+      # Git and jq only. This runs before any repository file is executed or read as configuration
+      # (.nvmrc, .npmrc, package scripts), because this job can mint an npm OIDC token.
+      - name: Check reviewed source binding
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_REVIEWED_SOURCE: ${{ inputs.reviewed-source }}
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_SOURCE: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_REF" == refs/heads/main ]]
+          [[ "$RELEASE_SOURCE" =~ ^[a-f0-9]{40}$ && "$RELEASE_REVIEWED_SOURCE" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "$RELEASE_SOURCE" ]]
+          [[ "$RELEASE_VERSION" =~ ^[0-9A-Za-z.+-]+$ ]]
+          [[ "$(git show HEAD:n8n/package.json | jq -r .version)" == "$RELEASE_VERSION" ]]
+          receipt="$(git show "HEAD:releases/$RELEASE_VERSION.json" | jq -r .reviewedSource)"
+          [[ "$receipt" == "$RELEASE_REVIEWED_SOURCE" ]]
+          git merge-base --is-ancestor "$RELEASE_REVIEWED_SOURCE" HEAD
+          # Everything except release receipts must match the reviewed source.
+          git diff --exit-code "$RELEASE_REVIEWED_SOURCE" HEAD -- . ':(exclude)releases'
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
           registry-url: https://registry.npmjs.org
       - run: npm install --global npm@11.20.0
       - run: npm ci --ignore-scripts --no-audit
-      - run: npm run check
-      - run: npm run lint --workspace n8n-nodes-polymorfa
-      - run: npm run check:sdk
-      - run: node scripts/release-gate.mjs
-        env:
-          RELEASE_VERSION: ${{ inputs.version }}
-          RELEASE_REVIEWED_SOURCE: ${{ inputs.reviewed-source }}
-          RELEASE_REF: ${{ github.ref }}
-          RELEASE_SOURCE: ${{ github.sha }}
+      - run: npm run build
       - run: npm publish --workspace n8n-nodes-polymorfa --provenance --access public

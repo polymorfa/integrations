@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
-import { validateReleaseIdentity } from './release-policy.mjs';
+import { validateReleaseIdentity, RELEASE_GATE_PATHSPEC } from './release-policy.mjs';
 const pkg = JSON.parse(readFileSync('n8n/package.json'));
 assert.equal(process.env.RELEASE_VERSION, pkg.version, 'Dispatch version must match the reviewed package.');
 const receipt = JSON.parse(readFileSync(`releases/${pkg.version}.json`));
@@ -11,6 +11,7 @@ validateReleaseIdentity({ ref: process.env.RELEASE_REF, source: process.env.RELE
   checkedOut: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   reviewed: process.env.RELEASE_REVIEWED_SOURCE, receiptReviewed: receipt.reviewedSource });
 execFileSync('git', ['merge-base', '--is-ancestor', receipt.reviewedSource, process.env.RELEASE_SOURCE]);
-// Receipt-only changes may follow the reviewed candidate; executable source must match.
-execFileSync('git', ['diff', '--exit-code', receipt.reviewedSource, 'HEAD', '--', 'shared', 'n8n', 'contracts', 'scripts', 'fixtures', 'package.json', 'package-lock.json', '.github/workflows/publish-n8n.yml'], { stdio: 'inherit' });
+// Only release receipts may change after the reviewed candidate. Every other path, including
+// tests, .npmrc, .nvmrc and workflows, must match it.
+execFileSync('git', ['diff', '--exit-code', receipt.reviewedSource, 'HEAD', '--', ...RELEASE_GATE_PATHSPEC], { stdio: 'inherit' });
 console.log('Required publication receipts are recorded. Protected environment approval and npm trusted publisher configuration remain required.');
