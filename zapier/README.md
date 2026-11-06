@@ -19,6 +19,11 @@ samples, delivery, dedupe, cleanup, rotation and provider log redaction before
 requesting public review. Provider acceptance of the synthetic sample path is
 still required.
 
+The receiver reads `bundle.rawRequest.headers`. Zapier's bundle documentation
+says those headers, other than Content-Type and Content-Length, arrive with an
+`Http-` prefix in Camel-Case. The receiver accepts that form or the plain name,
+exactly once. Confirm it on a real REST Hook delivery before review.
+
 Validate without contacting Zapier's style service:
 
 ```sh

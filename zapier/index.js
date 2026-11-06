@@ -53,8 +53,15 @@ const triggers = Object.fromEntries(Object.entries(events).map(([key, event]) =>
       await withThrottling(z, () => hooks.unsubscribe(bundle.authData, owned.id, owned.url, owned.group, owned.subscriptionKey, transport(z), 'zapier', owned.markerName)); return {};
     },
     async perform(z, bundle) {
-      if (!hooks.authenticate(bundle.authData, key, bundle.inputData.subscriptionKey, bundle.cleanedRequest.headers)) throw new z.errors.Error('Webhook authentication failed.', 'WebhookAuthentication', 401);
-      return [hooks.envelope(bundle.cleanedRequest.content, key)];
+      // Zapier documents bundle.rawRequest headers as Camel-Case with an Http- prefix
+      // (except Content-Type and Content-Length). Accept that form and the plain name, once.
+      const incoming = bundle.rawRequest?.headers || bundle.cleanedRequest?.headers;
+      if (!hooks.authenticate(bundle.authData, key, bundle.inputData.subscriptionKey, incoming, ['', 'http-'])) throw new z.errors.Error('Webhook authentication failed.', 'WebhookAuthentication', 401);
+      let body = bundle.cleanedRequest?.content;
+      if (typeof bundle.rawRequest?.content === 'string') {
+        try { body = JSON.parse(bundle.rawRequest.content); } catch { throw new z.errors.Error('Invalid webhook body.', 'InvalidEvent', 400); }
+      }
+      return [hooks.envelope(body, key)];
     },
     async performList() { return [require('./shared/samples.json')[key]]; },
     sample: require('./shared/samples.json')[key],

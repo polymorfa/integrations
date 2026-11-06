@@ -137,3 +137,16 @@ test('Zapier REST hook turns off and on again with a fresh activation each time'
   }
   assert.equal(new Set(s.posts().map(r => r.headers['Idempotency-Key'])).size, 3);
 });
+test('Zapier accepts the documented rawRequest shape with Http- prefixed Camel-Case headers', async () => {
+  const marker = hooks.identity(auth, 'messageReceived', 'synthetic-trigger'); const sample = require('../fixtures/events.json').messageReceived;
+  const operation = zapier.triggers.messageReceived.operation; const z = { errors: { Error } };
+  // Zapier docs (Bundle object, bundle.rawRequest): headers other than Content-Length and Content-Type
+  // are prefixed with Http- and written in Camel-Case, for example X-Time-GMT becomes Http-X-Time-Gmt.
+  const camel = ('Http-' + marker.name).split('-').map(w => w[0].toUpperCase() + w.slice(1).toLowerCase()).join('-');
+  const rawRequest = { method: 'POST', querystring: '', headers: { 'Content-Type': 'application/json', [camel]: marker.value, 'Http-User-Agent': 'polymorfa-webhooks' }, content: JSON.stringify(sample) };
+  const bundle = { authData: auth, inputData: { subscriptionKey: 'synthetic-trigger' }, rawRequest, cleanedRequest: sample };
+  assert.deepEqual(await operation.perform(z, bundle), [sample]);
+  await assert.rejects(operation.perform(z, { ...bundle, rawRequest: { ...rawRequest, headers: { 'Content-Type': 'application/json' } } }));
+  await assert.rejects(operation.perform(z, { ...bundle, rawRequest: { ...rawRequest, headers: { [camel]: marker.value, [marker.name]: marker.value } } }), 'one marker header only');
+  await assert.rejects(operation.perform(z, { ...bundle, rawRequest: { ...rawRequest, headers: { [camel]: '0'.repeat(64) } } }));
+});

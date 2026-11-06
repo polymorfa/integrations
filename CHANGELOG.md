@@ -8,6 +8,7 @@
   redeploys work, and a receipt for a deleted webhook is refused.
 - Make: detach reads the recorded webhook by ID; unusual URLs on unrelated
   project webhooks no longer break attach.
+- Zapier: accept the documented `Http-` prefixed raw request header form.
 - Preserve definite subscription errors and non-JSON uncertain outcomes;
   normalize callback ownership and native Zapier response headers.
 - Keep successful n8n batch items when Continue On Fail is enabled. Require
