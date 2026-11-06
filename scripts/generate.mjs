@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { actions, fields, events } = require('../shared/catalog.cjs');
@@ -7,7 +7,9 @@ const core = require('../shared/core.cjs');
 const hooks = require('../shared/hooks.cjs');
 const check = process.argv.includes('--check');
 let drift = false;
+const emitted = new Set();
 function emit(path, value) {
+  emitted.add(path);
   const content = typeof value === 'string' ? value : JSON.stringify(value, null, 2) + '\n';
   if (check) {
     if (!existsSync(path) || readFileSync(path, 'utf8') !== content) { console.error(`Generated file differs: ${path}`); drift = true; }
@@ -120,6 +122,20 @@ for (const [key, e] of Object.entries(events)) {
   ]);
   const valid = `polymorfaReceive(parameters.receiverName; parameters.receiverValue; '${key}'; headers; body)`;
   emit(`make/webhooks/${key}/communication.json`, { condition: `{{${valid}}}`, respond: { status: `{{if(${valid}; 200; 401)}}`, type: 'json', body: {} }, output: `{{polymorfaEnvelope(body; '${key}')}}` });
+}
+// Every file in these directories is generator output. A file the generator no longer emits is stale.
+const generatedDirs = ['n8n/shared', 'zapier/shared', 'pipedream/common', 'pipedream/actions', 'pipedream/sources', 'make/functions', 'make/modules', 'make/webhooks', 'make/connections'];
+function files(dir) { return existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? files(join(dir, e.name)) : [join(dir, e.name)]) : []; }
+function prune(dir) {
+  if (!existsSync(dir)) return;
+  for (const e of readdirSync(dir, { withFileTypes: true })) if (e.isDirectory()) prune(join(dir, e.name));
+  if (!readdirSync(dir).length) rmSync(dir, { recursive: true });
+}
+for (const dir of generatedDirs) {
+  for (const path of files(dir)) if (!emitted.has(path)) {
+    if (check) { console.error(`Stale generated file: ${path}`); drift = true; } else rmSync(path);
+  }
+  if (!check) prune(dir);
 }
 if (drift) process.exitCode = 1;
 else console.log(check ? 'Generated adapter files are current.' : 'Generated native adapter files.');

@@ -16,7 +16,9 @@ node scripts/check-upstream.mjs --pinned
 `shared/` owns the action fields, event groups, request mapping and recovery
 behavior. `npm run generate` copies that code into independently deployable
 native packages and generates Make functions and Pipedream components. Do not
-edit generated files directly. CI rejects stale generated output.
+edit generated files directly. CI rejects stale generated output, including
+files in generated directories that the generator no longer emits; `npm run
+generate` removes them.
 
 `contracts/source.json` pins the public API audience and matching SDK source.
 `coverage.json` identifies each allowed operation and deliberate exclusions.
