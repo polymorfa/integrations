@@ -5,8 +5,11 @@ const VERSION = '2026-09-22';
 const MAX_MEDIA_BYTES = 4 * 1024 * 1024;
 const MAX_WRITE_AGE = 23 * 60 * 60 * 1000;
 class IntegrationError extends Error {
-  constructor(code, status = 0, requestId, retryAfter) {
-    const recovery = code === 'idempotency_completed' ? ' The original write completed. Recover its original result; do not send again with a new key.' : code === 'subscription_receipt_deleted' ? ' The webhook created by this activation was deleted. Activate the trigger again to register a new one.' : /unknown|reconciliation/.test(code) ? ' Reconcile the original write before retrying. Keep its key and start time.' : retryAfter !== undefined ? ` Wait at least ${retryAfter} seconds; preserve the same key and start time.` : '';
+  constructor(code, status = 0, requestId, retryAfter, write = false) {
+    // A write that ended in a server error or is still running has an uncertain outcome, whatever its code.
+    const uncertain = /unknown|reconciliation/.test(code) || code === 'idempotency_in_progress' || (write && status >= 500);
+    const wait = retryAfter !== undefined ? ` Wait at least ${retryAfter} seconds; preserve the same key and start time.` : '';
+    const recovery = code === 'idempotency_completed' ? ' The original write completed. Recover its original result; do not send again with a new key.' : code === 'subscription_receipt_deleted' ? ' The webhook created by this activation was deleted. Activate the trigger again to register a new one.' : uncertain ? ' Reconcile the original write before retrying. Keep its key and start time.' + wait : wait;
     super(`Polymorfa ${code}${status ? ` (HTTP ${status})` : ''}${requestId ? `. Request: ${requestId}` : ''}.${recovery}`);
     this.name = 'IntegrationError'; this.code = code; this.status = status;
     this.requestId = requestId; this.retryAfter = retryAfter;
@@ -120,7 +123,7 @@ function parseResponse(response) {
     const code = safeCode(body?.error?.code, status >= 500 ? 'outcome_unknown' : status >= 300 && status < 400 ? 'redirect_refused' : 'request_failed');
     const h = Object.fromEntries(Object.entries(response.headers || {}).map(([k, v]) => [k.toLowerCase(), String(v)]));
     const retry = /^\d+$/.test(h['retry-after'] || '') ? Number(h['retry-after']) : undefined;
-    throw new IntegrationError(code, status, safeCode(body?.error?.request_id || h['x-request-id'], undefined), retry);
+    throw new IntegrationError(code, status, safeCode(body?.error?.request_id || h['x-request-id'], undefined), retry, typeof response.method === 'string' && response.method.toUpperCase() !== 'GET');
   }
   if (!body || typeof body !== 'object') throw new IntegrationError('invalid_response', status);
   return body;
@@ -129,6 +132,6 @@ async function execute(action, p, auth, transport, provider, now) {
   const request = buildRequest(action, p, auth, provider, now);
   let response;
   try { response = await transport(request); } catch { throw new IntegrationError(request.method === 'GET' ? 'network_error' : 'outcome_unknown'); }
-  return parseResponse(response);
+  return parseResponse({ ...response, method: request.method });
 }
 module.exports = { ORIGIN, VERSION, MAX_MEDIA_BYTES, IntegrationError, required, segment, object, conversation, advanced, headers, writeHeaders, messageBody, buildRequest, parseResponse, execute };

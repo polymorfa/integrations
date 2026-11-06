@@ -36,7 +36,7 @@ async function call(auth, transport, provider, method, path, body, key, query) {
   let response;
   try { response = await transport({ method, url: ORIGIN + path, headers: { ...headers(auth, provider), ...(key ? { 'Idempotency-Key': key } : {}) }, ...(body ? { body } : {}), ...(query ? { query } : {}) }); }
   catch { throw new IntegrationError(method === 'GET' ? 'network_error' : 'subscription_outcome_unknown'); }
-  return parseResponse(response);
+  return parseResponse({ ...response, method });
 }
 async function find(auth, url, group, subscriptionKey, transport, provider) {
   let cursor; const seen = new Set(); const matches = [];

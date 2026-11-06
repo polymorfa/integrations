@@ -60,7 +60,7 @@ test('n8n continue-on-fail retains successful write results and continues later 
   const [result] = await new Polymorfa().execute.call(context);
   assert.equal(requests, 2); assert.equal(result.length, 3);
   assert.equal(result[0].json.data.id, '1'); assert.equal(result[2].json.data.id, '2');
-  assert.match(result[1].json.error, /invalid_conversation_id/); assert.deepEqual(result[1].pairedItem, { item: 1 });
+  assert.match(result[1].json.error, /invalid_conversation_id/); assert.equal(result[1].json.code, 'invalid_conversation_id'); assert.deepEqual(result[1].pairedItem, { item: 1 });
   context.continueOnFail = () => false;
   await assert.rejects(new Polymorfa().execute.call(context));
 });
@@ -91,6 +91,20 @@ test('Zapier editor permits removal and sends an explicit empty reaction when th
   await zapier.creates.react.operation.perform({ request: async r => { body = r.body; return { status: 200, content: '{"data":{}}', headers: {} }; } }, { authData: auth, inputData: { ...input, messageId: '739182640518205' } });
   assert.equal(body.reaction, '');
   for (const trigger of Object.values(zapier.triggers)) assert.deepEqual(trigger.operation.inputFields.map(f => f.key), ['subscriptionKey']);
+});
+
+test('n8n continue-on-fail items carry code, status, request ID and retry delay without secrets', async () => {
+  const context = { getCredentials: async () => auth, getInputData: () => [{ json: {} }], continueOnFail: () => true,
+    getNodeParameter: (key, i, fallback) => input[key] ?? fallback, getNode: () => ({ name: 'test', typeVersion: 1 }),
+    helpers: { httpRequest: async () => ({ statusCode: 429, headers: { 'retry-after': '9', 'x-request-id': 'safe-request' }, body: { error: { code: 'rate_limited', message: auth.apiKey } } }) } };
+  const [[item]] = await new Polymorfa().execute.call(context);
+  assert.equal(item.json.code, 'rate_limited'); assert.equal(item.json.status, 429);
+  assert.equal(item.json.requestId, 'safe-request'); assert.equal(item.json.retryAfter, 9);
+  assert.ok(!JSON.stringify(item.json).includes(auth.apiKey));
+  assert.deepEqual(Object.keys(item.json).sort(), ['code', 'error', 'requestId', 'retryAfter', 'status']);
+  context.helpers.httpRequest = async () => ({ statusCode: 400, headers: {}, body: { error: { code: 'invalid_request' } } });
+  const [[plain]] = await new Polymorfa().execute.call(context);
+  assert.deepEqual(Object.keys(plain.json).sort(), ['code', 'error', 'status']);
 });
 
 function n8nHookContext(s, staticData, params) {

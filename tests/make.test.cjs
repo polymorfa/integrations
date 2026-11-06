@@ -135,6 +135,14 @@ test('Make non-2xx error handlers retain recovery and rate-limit guidance withou
   assert.match(iml.polymorfaError(409, {}, { error: { code: 'idempotency_completed', message: auth.apiKey } }), /Recover its original result/);
   assert.match(iml.polymorfaError(429, { 'retry-after': '19' }, { error: { code: 'rate_limited' } }), /19 seconds/);
   assert.match(iml.polymorfaError(502, {}, '<html>gateway error</html>'), /Reconcile/);
+  assert.match(iml.polymorfaError(503, {}, { error: { code: 'internal_error' } }, 'POST'), /Reconcile the original write/);
+  assert.doesNotMatch(iml.polymorfaError(503, {}, { error: { code: 'internal_error' } }, 'GET'), /Reconcile/);
+  for (const name of readdirSync('make/modules')) {
+    if (JSON.parse(readFileSync(`make/modules/${name}/metadata.json`)).type !== 'action') continue;
+    const communication = JSON.parse(readFileSync(`make/modules/${name}/communication.json`));
+    assert.ok(communication.response.error.message.includes("polymorfaError(statusCode; headers; body; get(polymorfaRequest("));
+    assert.equal(communication.response.error['429'].type, 'RateLimitError');
+  }
   const error = JSON.parse(readFileSync('make/base.json')).response.error;
   assert.ok(error['409'].message.includes('polymorfaError')); assert.equal(error['429'].type, 'RateLimitError'); assert.equal(error['5xx'], undefined);
 });

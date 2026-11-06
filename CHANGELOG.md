@@ -9,6 +9,8 @@
 - Make: detach reads the recorded webhook by ID; unusual URLs on unrelated
   project webhooks no longer break attach.
 - Zapier: accept the documented `Http-` prefixed raw request header form.
+- n8n Continue On Fail items include `code`, `status`, `requestId` and
+  `retryAfter`. Server errors on writes keep the reconcile guidance.
 - The n8n inbound handoff recipe derives its subscription key from the workflow ID.
 - Preserve definite subscription errors and non-JSON uncertain outcomes;
   normalize callback ownership and native Zapier response headers.

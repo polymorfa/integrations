@@ -8,7 +8,17 @@
   "followRedirect": false,
   "response": {
     "valid": "{{polymorfaResult(statusCode; headers; body) != null}}",
-    "output": "{{polymorfaResult(statusCode; headers; body)}}"
+    "output": "{{polymorfaResult(statusCode; headers; body)}}",
+    "error": {
+      "409": {
+        "message": "{{polymorfaError(statusCode; headers; body; get(polymorfaRequest('listTemplates'; parameters; connection); 'method'))}}"
+      },
+      "429": {
+        "type": "RateLimitError",
+        "message": "{{polymorfaError(statusCode; headers; body; get(polymorfaRequest('listTemplates'; parameters; connection); 'method'))}}"
+      },
+      "message": "{{polymorfaError(statusCode; headers; body; get(polymorfaRequest('listTemplates'; parameters; connection); 'method'))}}"
+    }
   },
   "log": {
     "sanitize": [

@@ -32,8 +32,10 @@ caps decoded bytes at 4 MiB. Provider/API bounds can be lower. IDs remain string
 
 With **Continue On Fail** enabled, successful batch items keep their results and
 failed items return an error paired to the original input. Later items continue.
-Use the saved write identity when handling an error; do not replay successful
-items with new keys.
+Failed items carry `error` (a readable message), `code`, and when present
+`status`, `requestId` and `retryAfter` (seconds). Branch on `code`, for example
+`idempotency_completed` or `outcome_unknown`. Use the saved write identity when
+handling an error; do not replay successful items with new keys.
 
 Give each trigger a unique, stable **Subscription Key**. The node registers a
 new webhook on each activation and keeps its creation state in workflow static

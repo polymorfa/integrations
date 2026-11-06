@@ -97,3 +97,13 @@ test('public surface excludes unlaunched Functions and message-operation lookups
   assert.ok(!('runFunction' in actions)); assert.ok(!('getMessageOperation' in actions));
 });
 module.exports = { auth, input, now };
+
+test('a server error on a write keeps reconcile guidance even when the body carries a JSON error code', async () => {
+  for (const status of [500, 503]) {
+    const transport = async () => ({ status, headers: { 'x-request-id': 'safe-request' }, body: { error: { code: 'internal_error', message: auth.apiKey } } });
+    await assert.rejects(core.execute('sendText', input, auth, transport, 'test', now), e => e.code === 'internal_error' && e.status === status && /Reconcile the original write before retrying\. Keep its key and start time\./.test(e.message) && !e.message.includes(auth.apiKey));
+    await assert.rejects(core.execute('listNumbers', {}, auth, transport, 'test', now), e => e.code === 'internal_error' && !/Reconcile/.test(e.message));
+  }
+  const inProgress = async () => ({ status: 409, headers: { 'retry-after': '5' }, body: { error: { code: 'idempotency_in_progress' } } });
+  await assert.rejects(core.execute('sendText', input, auth, inProgress, 'test', now), e => e.retryAfter === 5 && /Reconcile/.test(e.message) && /Wait at least 5 seconds/.test(e.message));
+});

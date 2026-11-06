@@ -1,7 +1,7 @@
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import type { IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, INodeProperties, INodeType, INodeTypeDescription } from 'n8n-workflow';
 import { actions, fields } from '../../shared/catalog';
-import { execute, MAX_MEDIA_BYTES } from '../../shared/core';
+import { execute, MAX_MEDIA_BYTES, IntegrationError } from '../../shared/core';
 import { transport } from './transport';
 
 type Field = { label: string; required?: boolean; help?: string; options?: Record<string, string>; default?: string; json?: boolean };
@@ -53,7 +53,15 @@ export class Polymorfa implements INodeType {
         result.push({ json: data, pairedItem: { item: i } });
       } catch (error) {
         if (this.continueOnFail()) {
-          result.push({ json: { error: error instanceof Error ? error.message : 'Polymorfa request failed.' }, pairedItem: { item: i } });
+          // Machine-readable state lets a workflow branch on recovery codes. IntegrationError fields hold only sanitized values.
+          const failure: Record<string, string | number> = { error: error instanceof Error ? error.message : 'Polymorfa request failed.' };
+          if (error instanceof IntegrationError) {
+            failure.code = error.code;
+            if (error.status) failure.status = error.status;
+            if (error.requestId) failure.requestId = error.requestId;
+            if (error.retryAfter !== undefined) failure.retryAfter = error.retryAfter;
+          }
+          result.push({ json: failure, pairedItem: { item: i } });
           continue;
         }
         throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });

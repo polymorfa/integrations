@@ -38,6 +38,9 @@
     "response": {
       "temp": {
         "createdId": "{{body.data.webhook.id}}"
+      },
+      "error": {
+        "message": "{{polymorfaError(statusCode; headers; body; 'POST')}}"
       }
     }
   },
