@@ -2,15 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 test('SDK drift detects a changed nested component referenced only by the SDK', t => {
-  const parent = join(homedir(), '.polymorfa-agent-work', 'integration-sdk-drift-tests');
-  mkdirSync(parent, { recursive: true });
-  const root = mkdtempSync(join(parent, 'fixture-'));
+  const root = mkdtempSync(join(tmpdir(), 'integration-sdk-drift-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, 'contracts'));
   const source = 'a'.repeat(40);
