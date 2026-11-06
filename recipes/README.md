@@ -28,8 +28,9 @@ Save `notificationStartedAt` when that logical notification first begins. Do not
 replace it with the current clock on every attempt. Missing inputs stop before a
 send. For a real send, configure a synthetic test recipient you control.
 
-The inbound workflow needs its own subscription key, Polymorfa credential and
-authorized destination. Its destination starts at `example.invalid`; configure
+The inbound trigger derives its subscription key from the workflow ID, so each
+imported copy has its own key. Select a Polymorfa credential and the trigger can
+activate as imported. Configure the authorized destination before relying on it. Its destination starts at `example.invalid`; configure
 destination authentication before activation. It sends project-wide message
 content to the selected external system. Add persistent dedupe by `id` before
 effects. Neither workflow is activated by importing it.
