@@ -6,6 +6,8 @@
 - Remove the Webhook Creation Key field from all triggers. Each activation uses
   its own adapter-generated nonce, so off/on, n8n test listening and Pipedream
   redeploys work, and a receipt for a deleted webhook is refused.
+- Make: detach reads the recorded webhook by ID; unusual URLs on unrelated
+  project webhooks no longer break attach.
 - Preserve definite subscription errors and non-JSON uncertain outcomes;
   normalize callback ownership and native Zapier response headers.
 - Keep successful n8n batch items when Continue On Fail is enabled. Require

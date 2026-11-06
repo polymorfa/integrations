@@ -91,5 +91,8 @@ cleanup during acceptance, including failed cleanup and credential rotation.
 Make uses provider-native custom IML functions, which require enablement by Make.
 The generated JavaScript functions are tested, but their IML bindings, private
 webhook-state mapping and attach/detach behavior require real platform acceptance.
-Its hook preflight refuses inventories larger than one page instead of risking
-a duplicate. Qualify pagination in Make before approving large-project triggers.
+Its attach preflight refuses inventories larger than one page instead of risking
+a duplicate. Detach reads the recorded webhook by ID, so cleanup works in any
+project size. Qualify attach pagination in Make before approving large-project
+triggers. Its hook matching treats an unparseable URL as no match, as the shared
+code does; a test runs both over the same inventories.

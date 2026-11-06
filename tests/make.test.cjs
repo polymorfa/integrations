@@ -70,16 +70,65 @@ test('Make verifies live creation receipts and maps the optional public QuickLin
   assert.equal(JSON.parse(readFileSync('make/modules/react/parameters.json')).find(p => p.name === 'reaction').required, false);
 });
 
-test('Make detach only deletes owned IDs in a complete successful inventory', () => {
+test('Make detach reads the recorded webhook by ID and deletes it only when owned', () => {
   const marker = iml.polymorfaHook(auth, 'messageReceived', 'key');
   const row = { id: 'owned', owner: 'project', projectId: auth.projectId, url: 'https://EXAMPLE.COM:443', format: 'native', headers: [{ name: marker.name }], eventTypes: ['message.received'] };
   const args = ['owned', auth.projectId, 'https://example.com/', marker.name, 'messageReceived'];
-  assert.equal(iml.polymorfaDetachHook({ data: [], page: { hasMore: false } }, ...args), false);
-  assert.equal(iml.polymorfaDetachHook({ data: [row], page: { hasMore: false } }, ...args), true);
-  assert.throws(() => iml.polymorfaDetachHook({ data: [], page: { hasMore: true } }, ...args));
-  assert.throws(() => iml.polymorfaDetachHook({ data: [{ ...row, projectId: 'other-project' }], page: { hasMore: false } }, ...args));
-  const detach = JSON.parse(readFileSync('make/webhooks/messageReceived/detach.json'));
-  assert.ok(detach[0].url.endsWith('/webhooks')); assert.equal(detach[1].condition, '{{temp.ownedPresent}}');
+  assert.equal(iml.polymorfaDetachHook(404, { error: { code: 'not_found' } }, ...args), false);
+  assert.equal(iml.polymorfaDetachHook(200, { data: row }, ...args), true);
+  assert.throws(() => iml.polymorfaDetachHook(200, { data: { ...row, id: 'different' } }, ...args));
+  assert.throws(() => iml.polymorfaDetachHook(200, { data: { ...row, projectId: 'other-project' } }, ...args));
+  assert.throws(() => iml.polymorfaDetachHook(200, { data: { ...row, url: 'https://user:pw@example.com/' } }, ...args), /ownership mismatch/);
+  assert.throws(() => iml.polymorfaDetachHook(503, { error: { code: 'unavailable' } }, ...args), /unavailable/);
+  for (const name of readdirSync('make/webhooks')) {
+    const detach = JSON.parse(readFileSync(`make/webhooks/${name}/detach.json`));
+    assert.equal(detach[0].method, 'GET'); assert.ok(detach[0].url.endsWith('/webhooks/{{polymorfaSegment(webhook.externalHookId)}}'));
+    assert.equal(detach[0].qs, undefined); assert.ok(detach[0].response.valid.includes('polymorfaDetachHook(statusCode; body;'));
+    assert.equal(detach[1].condition, '{{temp.ownedPresent}}'); assert.equal(detach[1].method, 'DELETE');
+    assert.deepEqual(JSON.parse(readFileSync(`make/webhooks/${name}/parameters.json`)).map(p => p.name), ['subscriptionKey']);
+  }
+});
+
+test('Make hook lookup matches shared find over the same inventories, including unusual URLs', async () => {
+  const marker = hooks.identity(auth, 'messageReceived', 'key');
+  const own = { id: 'owned', owner: 'project', projectId: auth.projectId, url: 'https://example.com/', enabled: true, format: 'native', headers: [{ name: marker.name }], eventTypes: ['message.received'] };
+  const other = url => ({ id: 'other-' + url, owner: 'project', projectId: auth.projectId, url, enabled: true, format: 'native', headers: [{ name: 'X-Other' }], eventTypes: ['message.received'] });
+  const unusual = ['https://user:pw@crm.example.com/hook', 'https://crm.example.com/hook#frag', 'http://crm.example.com/hook', 'https://crm.example.com/a b', 'not a url', '', 'https://crm.example.com/\\x'];
+  const inventories = [[], [own], ...unusual.map(u => [other(u)]), ...unusual.map(u => [other(u), own]), [own, { ...own, id: 'dup' }], [{ ...own, enabled: false }], [{ ...own, url: 'https://elsewhere.example/' }]];
+  for (const data of inventories) {
+    let core, make;
+    try { core = { id: (await hooks.find(auth, own.url, 'messageReceived', 'key', async () => ({ status: 200, body: { data, page: { hasMore: false } } }), 'test'))?.id || null }; } catch (e) { core = { error: true }; }
+    try { make = { id: iml.polymorfaFindHook({ data, page: { hasMore: false } }, auth, own.url, 'messageReceived', 'key') }; } catch (e) { make = { error: true }; }
+    assert.deepEqual(make, core, JSON.stringify(data.map(h => h.url)));
+  }
+});
+
+test('Make attach and detach steps turn a webhook off and on again without a duplicate', async () => {
+  const { server } = require('./fake-webhooks.cjs'); const s = server(auth);
+  const hookUrl = 'https://hook.eu1.make.com/synthetic';
+  const base = 'https://api.polymorfa.com/platform/projects/' + auth.projectId + '/webhooks';
+  const headers = extra => ({ Authorization: 'Bearer ' + auth.apiKey, ...extra });
+  const attach = async () => {
+    const list = (await s.request({ method: 'GET', url: base, headers: headers() })).body;
+    const temp = { ownedId: iml.polymorfaFindHook(list, auth, hookUrl, 'messageReceived', 'key'), nonce: iml.polymorfaCreationNonce(hookUrl) };
+    const marker = iml.polymorfaHook(auth, 'messageReceived', 'key');
+    if (!temp.ownedId) {
+      const created = await s.request({ method: 'POST', url: base, headers: headers({ 'Idempotency-Key': iml.polymorfaCreateKey(marker.key, temp.nonce) }), body: { url: hookUrl, eventTypes: ['message.received'], format: 'native', enabled: true, headers: [{ name: marker.name, value: marker.value }] } });
+      temp.createdId = created.body.data.webhook.id;
+    }
+    const live = (await s.request({ method: 'GET', url: base, headers: headers() })).body;
+    return { externalHookId: iml.polymorfaLiveHook(live, auth, hookUrl, 'messageReceived', 'key', temp.ownedId || temp.createdId), ownedUrl: hookUrl, receiverName: marker.name };
+  };
+  const detach = async webhook => {
+    const r = await s.request({ method: 'GET', url: base + '/' + webhook.externalHookId, headers: headers() });
+    if (iml.polymorfaDetachHook(r.status, r.body, webhook.externalHookId, auth.projectId, webhook.ownedUrl, webhook.receiverName, 'messageReceived')) await s.request({ method: 'DELETE', url: base + '/' + webhook.externalHookId, headers: headers() });
+  };
+  for (let i = 0; i < 3; i++) {
+    const webhook = await attach(); assert.equal(s.rows.length, 1); assert.equal(webhook.externalHookId, s.rows[0].id);
+    await detach(webhook); assert.equal(s.rows.length, 0);
+    await detach(webhook);
+  }
+  assert.equal(new Set(s.posts().map(r => r.headers['Idempotency-Key'])).size, 3);
 });
 
 test('Make non-2xx error handlers retain recovery and rate-limit guidance without response secrets', () => {
