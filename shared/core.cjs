@@ -6,7 +6,7 @@ const MAX_MEDIA_BYTES = 4 * 1024 * 1024;
 const MAX_WRITE_AGE = 23 * 60 * 60 * 1000;
 class IntegrationError extends Error {
   constructor(code, status = 0, requestId, retryAfter) {
-    const recovery = code === 'idempotency_completed' ? ' The original write completed. Recover its original result; do not send again with a new key.' : /unknown|reconciliation/.test(code) ? ' Reconcile the original write before retrying. Keep its key and start time.' : retryAfter !== undefined ? ` Wait at least ${retryAfter} seconds; preserve the same key and start time.` : '';
+    const recovery = code === 'idempotency_completed' ? ' The original write completed. Recover its original result; do not send again with a new key.' : code === 'subscription_receipt_deleted' ? ' The webhook created by this activation was deleted. Activate the trigger again to register a new one.' : /unknown|reconciliation/.test(code) ? ' Reconcile the original write before retrying. Keep its key and start time.' : retryAfter !== undefined ? ` Wait at least ${retryAfter} seconds; preserve the same key and start time.` : '';
     super(`Polymorfa ${code}${status ? ` (HTTP ${status})` : ''}${requestId ? `. Request: ${requestId}` : ''}.${recovery}`);
     this.name = 'IntegrationError'; this.code = code; this.status = status;
     this.requestId = requestId; this.retryAfter = retryAfter;

@@ -59,11 +59,16 @@ git and jq before Node setup, `.npmrc` use or any repository script. Restrict th
 and require an independent release reviewer before enabling the trusted publisher.
 These external settings cannot be secured by editable workflow code alone.
 
-Webhook marker names, receiver verifiers and create-key seeds now use separate
-HMAC domains. Each new activation adds its own nonce to the create key so a
-deleted hook cannot be recovered from an old create receipt. This is a change
-before the first release; remove old development subscriptions with their recorded
-ownership metadata before recreating them. No production migration is implied.
+Webhook marker names, receiver verifiers and create-key seeds use separate HMAC
+domains. The create key is `HMAC(markerKey, nonce)`. `hooks.activate` generates
+a random nonce per activation and saves it in provider-private state before the
+create: n8n node static data, Pipedream `$.service.db`, Zapier and Make in the
+single `performSubscribe` call or attach run (neither platform offers state that
+persists before those return). An uncertain retry of the same activation reuses
+the nonce; a confirmed activation, a deletion or a replayed receipt for a deleted
+webhook (`subscription_receipt_deleted`) clears it. Find-before-create and the
+post-create live-ownership check stay in place. Users no longer enter a webhook
+creation key. This is a change before the first release; no migration is implied.
 
 Keep API credentials in each provider's credential store. Webhook receivers use
 an authenticated per-subscription header supported by the public subscription

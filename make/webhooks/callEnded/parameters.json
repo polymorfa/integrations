@@ -5,12 +5,5 @@
     "type": "text",
     "required": true,
     "help": "Unique stable label for this webhook. Events are project-wide."
-  },
-  {
-    "name": "registrationKey",
-    "label": "Webhook Creation Key",
-    "type": "text",
-    "required": true,
-    "help": "Save a unique key for this registration and reuse it for uncertain retries. After confirmed deletion, use a new key for the next registration."
   }
 ]

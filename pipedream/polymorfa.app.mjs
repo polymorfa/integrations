@@ -16,7 +16,8 @@ export default {
       };
     },
     execute($, action, input) { return core.execute(action, input, this.auth(), this.transport($), 'pipedream'); },
-    subscribe($, url, group, key, registrationKey) { return hooks.subscribe(this.auth(), url, group, key, this.transport($), 'pipedream', registrationKey); },
+    // store: the source's $.service.db view of this activation's pending creation nonce.
+    activate($, url, group, key, store) { return hooks.activate(this.auth(), url, group, key, this.transport($), 'pipedream', store); },
     unsubscribe($, owned) { return hooks.unsubscribe(this.auth(), owned.id, owned.url, owned.group, owned.subscriptionKey, this.transport($), 'pipedream', owned.markerName); },
     authenticate(group, key, headers) { return hooks.authenticate(this.auth(), group, key, headers); },
     envelope(body, group) { return hooks.envelope(body, group); },

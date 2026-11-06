@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-- Separate webhook receiver secrets from public marker/idempotency metadata;
-  use a fresh create identity after a deleted subscription.
+- Separate webhook receiver secrets from public marker/idempotency metadata.
+- Remove the Webhook Creation Key field from all triggers. Each activation uses
+  its own adapter-generated nonce, so off/on, n8n test listening and Pipedream
+  redeploys work, and a receipt for a deleted webhook is refused.
 - Preserve definite subscription errors and non-JSON uncertain outcomes;
   normalize callback ownership and native Zapier response headers.
 - Keep successful n8n batch items when Continue On Fail is enabled. Require

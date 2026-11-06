@@ -36,13 +36,16 @@ const triggers = Object.fromEntries(Object.entries(events).map(([key, event]) =>
     type: 'hook', canPaginate: false,
     inputFields: [
       { key: 'subscriptionKey', label: 'Subscription Key', type: 'string', required: true, helpText: 'A unique stable key for this Zap trigger. Project-wide events are sent to Zapier. Use a different key for another trigger.' },
-      { key: 'registrationKey', label: 'Webhook Creation Key', type: 'string', required: true, helpText: 'Save a unique key for this registration and reuse it for uncertain retries. After confirmed deletion, use a new key for the next registration.' },
     ],
     async performSubscribe(z, bundle) {
       // Zapier's logger scrubs authData values before its HTTP logs run.
       // Register the derived receiver secret before the registration request.
       bundle.authData.webhookVerificationSecret = hooks.identity(bundle.authData, key, bundle.inputData.subscriptionKey).value;
-      const owned = await withThrottling(z, () => hooks.subscribe(bundle.authData, bundle.targetUrl, key, bundle.inputData.subscriptionKey, transport(z), 'zapier', bundle.inputData.registrationKey));
+      // Zapier keeps no private state before performSubscribe returns, so each call is one activation
+      // with its own creation nonce. Its result is stored by Zapier as subscribeData.
+      let pending;
+      const store = { get: () => pending, set: value => { pending = value || undefined; } };
+      const owned = await withThrottling(z, () => hooks.activate(bundle.authData, bundle.targetUrl, key, bundle.inputData.subscriptionKey, transport(z), 'zapier', store));
       return { ...owned, url: bundle.targetUrl };
     },
     async performUnsubscribe(z, bundle) {

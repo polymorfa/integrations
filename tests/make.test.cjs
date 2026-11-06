@@ -42,12 +42,13 @@ test('Make preserves an operator-disabled owned hook', () => {
 
 test('Make activation keys are independent of receiver secrets and change between activations', () => {
   const marker = iml.polymorfaHook(auth, 'messageReceived', 'key');
-  const first = iml.polymorfaCreateKey(marker.key, '11111111-1111-4111-8111-111111111111');
-  const second = iml.polymorfaCreateKey(marker.key, '22222222-2222-4222-8222-222222222222');
-  assert.notEqual(first, second); assert.ok(!first.includes(marker.value));
-  assert.equal(first, hooks.creationKey(marker.key, '11111111-1111-4111-8111-111111111111'));
-  assert.equal(first, iml.polymorfaCreateKey(marker.key, '11111111-1111-4111-8111-111111111111'));
-  assert.throws(() => iml.polymorfaCreateKey(marker.key, ''));
+  const n1 = iml.polymorfaCreationNonce('https://hook.make.com/synthetic'); const n2 = iml.polymorfaCreationNonce('https://hook.make.com/synthetic');
+  assert.match(n1, /^[a-f0-9]{64}$/); assert.notEqual(n1, n2);
+  const first = iml.polymorfaCreateKey(marker.key, n1);
+  assert.notEqual(first, iml.polymorfaCreateKey(marker.key, n2)); assert.ok(!first.includes(marker.value));
+  assert.equal(first, hooks.creationKey(marker.key, n1));
+  assert.equal(first, iml.polymorfaCreateKey(marker.key, n1));
+  for (const bad of ['', 'short', undefined, 'x'.repeat(129)]) assert.throws(() => iml.polymorfaCreateKey(marker.key, bad));
   const base = JSON.parse(readFileSync('make/base.json'));
   for (const path of ['request.headers.idempotency-key', 'request.body.headers', 'response.body.data.idempotency.key']) assert.ok(base.log.sanitize.includes(path));
 });
@@ -62,7 +63,9 @@ test('Make verifies live creation receipts and maps the optional public QuickLin
   const sample = { ...require('../fixtures/events.json').numberState, externalId: 'synthetic-order-reference', transportSecret: 'must-not-escape' };
   assert.deepEqual(JSON.parse(JSON.stringify(iml.polymorfaEnvelope(sample, 'numberState'))), hooks.envelope(sample, 'numberState'));
   const attach = JSON.parse(readFileSync('make/webhooks/numberState/attach.json'));
-  assert.ok(attach[1].headers['Idempotency-Key'].includes('parameters.registrationKey'));
+  assert.ok(attach[0].response.temp.nonce.includes('polymorfaCreationNonce(webhook.url)'));
+  assert.ok(attach[1].headers['Idempotency-Key'].includes('temp.nonce'));
+  assert.ok(!JSON.stringify(attach).includes('registrationKey'));
   assert.ok(attach[2].response.data.externalHookId.includes('polymorfaLiveHook'));
   assert.equal(JSON.parse(readFileSync('make/modules/react/parameters.json')).find(p => p.name === 'reaction').required, false);
 });

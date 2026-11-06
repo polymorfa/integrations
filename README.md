@@ -12,13 +12,16 @@ a separate workflow engine or stores your third-party app connections.
 
 Documentation: [docs.polymorfa.com](https://docs.polymorfa.com).
 
-Webhook triggers save two values in their native configuration. The subscription
-key identifies the trigger and stays stable. The webhook creation key identifies
-one registration attempt and stays the same across uncertain retries. Change the
-creation key only after confirming that the previous registration was deleted.
-Reusing a deleted registration's key fails reconciliation instead of reporting a
-working trigger. An old or uncertain registration needs inventory reconciliation
-before a new creation key is used. Native editor acceptance remains pending.
+Webhook triggers ask for one value: a subscription key that identifies the
+trigger and stays stable. Each activation registers its own webhook with a
+creation nonce the adapter generates and keeps in the platform's private trigger
+state. A retry of an uncertain activation reuses that nonce, so it cannot create
+a second webhook. Turning a trigger off and on again uses a new nonce. Before
+creating, every adapter looks for its owned webhook and adopts it, and after
+creating it confirms the webhook is live. If the API replays a receipt for a
+webhook that was since deleted, activation fails with
+`subscription_receipt_deleted` instead of reporting a working trigger; the next
+activation registers a new webhook. Native editor acceptance remains pending.
 
 Build and maintenance: [MAINTAINING.md](MAINTAINING.md).
 Provider source: [n8n](n8n/README.md), [Make](make/README.md),

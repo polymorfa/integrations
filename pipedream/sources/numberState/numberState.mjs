@@ -4,16 +4,17 @@ export default {
   key: "polymorfa-numberState", name: "Number State Changed", description: "Triggers when a Number changes state, connects or logs out.",
   version: '0.1.0', type: 'source', dedupe: 'unique',
   props: { polymorfa, db: '$.service.db', http: { type: '$.interface.http', customResponse: true },
-    subscriptionKey: { type: 'string', label: 'Subscription Key', description: 'Unique stable label for this source. Events are project-wide.' },
-    registrationKey: { type: 'string', label: 'Webhook Creation Key', description: 'Save a unique key for this registration and reuse it for uncertain retries. After confirmed deletion, use a new key for the next registration.' } },
+    subscriptionKey: { type: 'string', label: 'Subscription Key', description: 'Unique stable label for this source. Events are project-wide.' } },
   hooks: {
     async activate() {
-      const owned = await this.polymorfa.subscribe(undefined, this.http.endpoint, "numberState", this.subscriptionKey, this.registrationKey);
+      const store = { get: () => this.db.get('pendingCreation'), set: value => this.db.set('pendingCreation', value || null) };
+      const owned = await this.polymorfa.activate(undefined, this.http.endpoint, "numberState", this.subscriptionKey, store);
       this.db.set('ownedSubscription', owned);
     },
     async deactivate() {
       const owned = this.db.get('ownedSubscription');
       if (owned) { await this.polymorfa.unsubscribe(undefined, owned); this.db.set('ownedSubscription', null); }
+      this.db.set('pendingCreation', null);
     },
   },
   async run(event) {

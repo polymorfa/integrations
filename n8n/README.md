@@ -35,10 +35,12 @@ failed items return an error paired to the original input. Later items continue.
 Use the saved write identity when handling an error; do not replay successful
 items with new keys.
 
-Give each trigger a unique, stable **Subscription Key**. Webhook subscriptions
-are project-wide. Filtering a workflow after receipt does not prevent disclosure
-to n8n. Dedupe by event `id` before downstream effects; repeated delivery is
-possible. Delete/disable the owned webhook before revoking its credential.
+Give each trigger a unique, stable **Subscription Key**. The node registers a
+new webhook on each activation and keeps its creation state in workflow static
+data, so test listening, deactivation and reactivation need no extra field.
+Webhook subscriptions are project-wide. Filtering a workflow after receipt does
+not prevent disclosure to n8n. Dedupe by event `id` before downstream effects;
+repeated delivery is possible. Delete/disable the owned webhook before revoking its credential.
 
 n8n executes your workflow under its own hosting and retention settings. Choosing
 a Polymorfa EU or Brazil region does not place n8n's processing in that region.
