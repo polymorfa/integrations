@@ -1,0 +1,20 @@
+[
+  {
+    "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks/{{polymorfaSegment(webhook.externalHookId)}}",
+    "method": "GET",
+    "response": {
+      "valid": "{{polymorfaDetachHook(statusCode; body; webhook.externalHookId; connection.projectId; webhook.ownedUrl; webhook.receiverName; 'messageState') != null}}",
+      "temp": {
+        "ownedPresent": "{{polymorfaDetachHook(statusCode; body; webhook.externalHookId; connection.projectId; webhook.ownedUrl; webhook.receiverName; 'messageState')}}"
+      }
+    }
+  },
+  {
+    "condition": "{{temp.ownedPresent}}",
+    "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks/{{polymorfaSegment(webhook.externalHookId)}}",
+    "method": "DELETE",
+    "headers": {
+      "Idempotency-Key": "integration-delete-{{webhook.externalHookId}}"
+    }
+  }
+]

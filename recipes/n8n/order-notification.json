@@ -1,0 +1,76 @@
+{
+  "name": "Polymorfa order notification (configure before use)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "recipe-input",
+      "name": "Replace with authorized order trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "validate-order",
+      "name": "Validate saved notification ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().map((item, index) => {\n  if (typeof item.json.notificationId !== 'string' || !item.json.notificationId.trim()) {\n    throw new Error('A saved non-empty notificationId is required before sending.');\n  }\n  return { ...item, pairedItem: { item: index } };\n});"
+      }
+    },
+    {
+      "id": "notify-order",
+      "name": "Send order notification",
+      "type": "n8n-nodes-polymorfa.polymorfa",
+      "typeVersion": 1,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "operation": "sendText",
+        "session": "={{$json.numberId}}",
+        "recipientType": "phoneNumber",
+        "recipient": "={{$json.recipient}}",
+        "text": "={{$json.notificationText}}",
+        "idempotencyKey": "={{'order-notification:' + $json.notificationId}}",
+        "writeCreatedAt": "={{$json.notificationStartedAt}}"
+      }
+    }
+  ],
+  "connections": {
+    "Replace with authorized order trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate saved notification ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate saved notification ID": {
+      "main": [
+        [
+          {
+            "node": "Send order notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

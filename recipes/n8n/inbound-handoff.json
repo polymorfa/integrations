@@ -1,0 +1,10 @@
+{
+  "name": "Polymorfa inbound handoff (configure before use)",
+  "active": false,
+  "nodes": [
+    { "id": "inbound-message", "name": "Receive project messages", "type": "n8n-nodes-polymorfa.polymorfaTrigger", "typeVersion": 1, "position": [0, 0], "parameters": { "eventGroup": "messageReceived", "subscriptionKey": "={{ 'inbound-handoff-' + $workflow.id }}" } },
+    { "id": "authorized-destination", "name": "Configure destination auth and persistent dedupe", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [260, 0], "parameters": { "method": "POST", "url": "https://example.invalid/configure-authorized-destination", "sendBody": true, "specifyBody": "json", "jsonBody": "={{JSON.stringify($json)}}", "options": {} } }
+  ],
+  "connections": { "Receive project messages": { "main": [[{ "node": "Configure destination auth and persistent dedupe", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1" }
+}

@@ -1,0 +1,43 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+
+test('SDK drift detects a changed nested component referenced only by the SDK', t => {
+  const root = mkdtempSync(join(tmpdir(), 'integration-sdk-drift-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, 'contracts'));
+  const source = 'a'.repeat(40);
+  const ref = name => ({ $ref: '#/components/schemas/' + name });
+  const localOperation = { requestBody: { content: { 'application/json': { schema: ref('Local') } } } };
+  const sdkOperation = { requestBody: { content: { 'application/json': { schema: ref('Transport') } } } };
+  const local = { paths: { '/messages': { post: localOperation } }, components: { schemas: { Local: { type: 'string' } } } };
+  const sdk = { paths: { '/messages': { post: sdkOperation } }, components: { schemas: { Local: { type: 'string' }, Transport: { type: 'object', properties: { detail: ref('TransportDetail') } }, TransportDetail: { type: 'string' } } } };
+  const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(k => [k, canonical(value[k])])) : value;
+  const hash = value => createHash('sha256').update(JSON.stringify(canonical(value))).digest('hex');
+  const fragments = { 'POST /messages': hash(sdkOperation) };
+  for (const [name, schema] of Object.entries(sdk.components.schemas)) fragments['#/components/schemas/' + name] = hash(schema);
+  const save = (name, value) => writeFileSync(join(root, name), JSON.stringify(value));
+  save('contracts/source.json', { sdk: { repository: 'example/sdk', source }, specs: { messaging: { snapshot: 'contracts/local.json', sdkSnapshotPath: 'contracts/sdk.json' } } });
+  save('contracts/coverage.json', { operations: { send: { contract: 'messaging', path: '/messages', method: 'POST' } } });
+  save('contracts/sdk-baseline.json', { fragments: { messaging: fragments } });
+  save('contracts/local.json', local);
+  save('sdk.json', sdk);
+  writeFileSync(join(root, 'fetch-fixture.mjs'), `import { readFileSync } from 'node:fs';
+globalThis.fetch = async input => {
+  if (!String(input).endsWith('/${source}/contracts/sdk.json')) throw new Error('Unexpected fixture request');
+  return { ok: true, json: async () => JSON.parse(readFileSync(new URL('./sdk.json', import.meta.url))) };
+};`);
+  const run = () => spawnSync(process.execPath, ['--import', join(root, 'fetch-fixture.mjs'), fileURLToPath(new URL('../scripts/check-upstream.mjs', import.meta.url)), '--pinned'], { cwd: root, encoding: 'utf8' });
+  const unchanged = run();
+  assert.equal(unchanged.status, 0, unchanged.stderr);
+  sdk.components.schemas.TransportDetail.type = 'integer';
+  save('sdk.json', sdk);
+  const changed = run();
+  assert.equal(changed.status, 1);
+  assert.match(changed.stderr, /SDK drift from reviewed baseline: messaging:#\/components\/schemas\/TransportDetail/);
+});

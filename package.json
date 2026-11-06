@@ -1,0 +1,32 @@
+{
+  "name": "polymorfa-integrations",
+  "private": true,
+  "version": "0.1.0",
+  "license": "MIT",
+  "packageManager": "npm@11.20.0",
+  "engines": { "node": ">=22 <25" },
+  "workspaces": ["n8n", "zapier"],
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "check:generated": "node scripts/generate.mjs --check",
+    "check:contracts": "node scripts/check-contracts.mjs",
+    "check:upstream": "node scripts/check-upstream.mjs",
+    "check:sdk": "node scripts/verify-sdk.mjs",
+    "build": "npm run generate && npm run build --workspace n8n-nodes-polymorfa",
+    "pretest": "npm run build",
+    "test": "node --test --test-reporter=spec tests/*.test.cjs tests/*.test.mjs",
+    "check": "npm run check:contracts && npm run check:generated && npm test",
+    "validate:zapier": "npm run validate --workspace polymorfa-zapier",
+    "make:access": "node scripts/make-access.mjs"
+  },
+  "devDependencies": {
+    "@makehq/sdk": "1.9.0",
+    "@n8n/node-cli": "0.54.6",
+    "@pipedream/platform": "3.4.0",
+    "@types/node": "22.19.1",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "typescript": "5.9.3",
+    "zapier-platform-cli": "19.3.0"
+  }
+}

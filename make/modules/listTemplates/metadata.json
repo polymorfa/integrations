@@ -1,0 +1,6 @@
+{
+  "label": "List Templates",
+  "description": "Lists message templates for a project.",
+  "connection": "project",
+  "type": "action"
+}

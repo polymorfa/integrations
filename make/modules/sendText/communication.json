@@ -1,0 +1,29 @@
+{
+  "url": "{{get(polymorfaRequest('sendText'; parameters; connection); 'url')}}",
+  "method": "{{get(polymorfaRequest('sendText'; parameters; connection); 'method')}}",
+  "headers": "{{get(polymorfaRequest('sendText'; parameters; connection); 'headers')}}",
+  "qs": "{{get(polymorfaRequest('sendText'; parameters; connection); 'query')}}",
+  "body": "{{get(polymorfaRequest('sendText'; parameters; connection); 'body')}}",
+  "type": "json",
+  "followRedirect": false,
+  "response": {
+    "valid": "{{polymorfaResult(statusCode; headers; body) != null}}",
+    "output": "{{polymorfaResult(statusCode; headers; body)}}",
+    "error": {
+      "409": {
+        "message": "{{polymorfaError(statusCode; headers; body; get(polymorfaRequest('sendText'; parameters; connection); 'method'))}}"
+      },
+      "429": {
+        "type": "RateLimitError",
+        "message": "{{polymorfaError(statusCode; headers; body; get(polymorfaRequest('sendText'; parameters; connection); 'method'))}}"
+      },
+      "message": "{{polymorfaError(statusCode; headers; body; get(polymorfaRequest('sendText'; parameters; connection); 'method'))}}"
+    }
+  },
+  "log": {
+    "sanitize": [
+      "request.headers.authorization",
+      "request.headers.idempotency-key"
+    ]
+  }
+}
