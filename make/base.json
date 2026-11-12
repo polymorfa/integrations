@@ -1,0 +1,31 @@
+{
+  "baseUrl": "https://api.polymorfa.com",
+  "headers": {
+    "Authorization": "Bearer {{connection.apiKey}}",
+    "Polymorfa-Version": "2026-09-22",
+    "User-Agent": "polymorfa-make/0.1.0"
+  },
+  "log": {
+    "sanitize": [
+      "request.headers.authorization",
+      "request.headers.Authorization",
+      "request.headers.idempotency-key",
+      "request.headers.Idempotency-Key",
+      "request.body.headers",
+      "response.body.data.secret",
+      "response.body.data.idempotency.key"
+    ]
+  },
+  "response": {
+    "error": {
+      "409": {
+        "message": "{{polymorfaError(statusCode; headers; body)}}"
+      },
+      "429": {
+        "type": "RateLimitError",
+        "message": "{{polymorfaError(statusCode; headers; body)}}"
+      },
+      "message": "{{polymorfaError(statusCode; headers; body)}}"
+    }
+  }
+}

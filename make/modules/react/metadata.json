@@ -1,0 +1,6 @@
+{
+  "label": "React to Message",
+  "description": "Adds or removes a reaction on a message.",
+  "connection": "project",
+  "type": "action"
+}

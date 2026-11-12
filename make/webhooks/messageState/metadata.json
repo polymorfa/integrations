@@ -1,0 +1,5 @@
+{
+  "type": "dedicated",
+  "connection": "project",
+  "label": "Message State Changed"
+}

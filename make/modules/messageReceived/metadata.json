@@ -1,0 +1,6 @@
+{
+  "label": "New Message",
+  "description": "Triggers when a message is received.",
+  "type": "instant",
+  "webhook": "messageReceived"
+}

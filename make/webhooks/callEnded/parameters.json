@@ -1,0 +1,9 @@
+[
+  {
+    "name": "subscriptionKey",
+    "label": "Subscription Key",
+    "type": "text",
+    "required": true,
+    "help": "Unique stable label for this webhook. Events are project-wide."
+  }
+]

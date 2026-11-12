@@ -1,0 +1,6 @@
+{
+  "label": "Message State Changed",
+  "description": "Triggers when a message is sent, acknowledged, failed or updated.",
+  "type": "instant",
+  "webhook": "messageState"
+}

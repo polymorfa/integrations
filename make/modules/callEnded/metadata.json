@@ -1,0 +1,6 @@
+{
+  "label": "Call Ended",
+  "description": "Triggers when a call ends.",
+  "type": "instant",
+  "webhook": "callEnded"
+}

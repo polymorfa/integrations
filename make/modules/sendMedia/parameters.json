@@ -1,0 +1,119 @@
+[
+  {
+    "name": "session",
+    "type": "text",
+    "label": "Number",
+    "required": true,
+    "help": "The exact Number identifier from Polymorfa. Keep it as a string."
+  },
+  {
+    "name": "recipientType",
+    "type": "select",
+    "label": "Recipient Type",
+    "required": true,
+    "default": "phoneNumber",
+    "options": [
+      {
+        "value": "phoneNumber",
+        "label": "Phone Number"
+      },
+      {
+        "value": "id",
+        "label": "Conversation ID"
+      },
+      {
+        "value": "bsuid",
+        "label": "Business-scoped User ID"
+      }
+    ]
+  },
+  {
+    "name": "recipient",
+    "type": "text",
+    "label": "Recipient",
+    "required": true,
+    "help": "Use an international phone number including +, a conversation ID, or a business-scoped user ID."
+  },
+  {
+    "name": "mediaType",
+    "type": "select",
+    "label": "Media Type",
+    "required": true,
+    "default": "image",
+    "options": [
+      {
+        "value": "image",
+        "label": "Image"
+      },
+      {
+        "value": "video",
+        "label": "Video"
+      },
+      {
+        "value": "file",
+        "label": "File"
+      },
+      {
+        "value": "voice",
+        "label": "Voice"
+      }
+    ]
+  },
+  {
+    "name": "mediaSource",
+    "type": "select",
+    "label": "Media Source",
+    "required": true,
+    "default": "url",
+    "options": [
+      {
+        "value": "url",
+        "label": "HTTPS URL"
+      },
+      {
+        "value": "base64",
+        "label": "Base64 Bytes"
+      }
+    ]
+  },
+  {
+    "name": "media",
+    "type": "text",
+    "label": "Media",
+    "required": true,
+    "help": "HTTPS URL or raw base64 bytes. Base64 is limited to 4 MiB decoded by these adapters; provider/API limits can be lower."
+  },
+  {
+    "name": "mimeType",
+    "type": "text",
+    "label": "MIME Type",
+    "required": false
+  },
+  {
+    "name": "caption",
+    "type": "text",
+    "label": "Caption",
+    "required": false
+  },
+  {
+    "name": "filename",
+    "type": "text",
+    "label": "Filename",
+    "required": false,
+    "help": "Used for file messages."
+  },
+  {
+    "name": "idempotencyKey",
+    "type": "text",
+    "label": "Idempotency Key",
+    "required": true,
+    "help": "Required for writes. Map a stable business key unique to this write. Preserve it across retries."
+  },
+  {
+    "name": "writeCreatedAt",
+    "type": "text",
+    "label": "Write Started At",
+    "required": true,
+    "help": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes older than 23 hours require reconciliation."
+  }
+]

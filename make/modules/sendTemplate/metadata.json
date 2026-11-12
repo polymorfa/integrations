@@ -1,0 +1,6 @@
+{
+  "label": "Send Template",
+  "description": "Sends a template with its approved name and language.",
+  "connection": "project",
+  "type": "action"
+}

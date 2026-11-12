@@ -1,0 +1,27 @@
+{
+  "messageReceived": {
+    "id": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71",
+    "session": "739182640518203", "timestamp": "2026-11-01T12:00:00.000Z", "event": "message.received",
+    "payload": {
+      "id": "739182640518204", "whatsapp_ids": { "linked_devices": "SYNTHETIC-EXAMPLE" },
+      "conversation": { "id": "739182640518205" }, "fromMe": false,
+      "timestamp": 1793534400, "pushName": "Synthetic contact", "isGroup": false,
+      "type": "text", "text": "Synthetic setup sample. No customer message was read."
+    }
+  },
+  "messageState": {
+    "id": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a72",
+    "session": "739182640518203", "timestamp": "2026-11-01T12:00:00.000Z", "event": "message.sent",
+    "payload": { "id": "739182640518204", "whatsapp_ids": { "linked_devices": "SYNTHETIC-EXAMPLE" }, "conversation": { "id": "739182640518205" }, "type": "text", "timestamp": 1793534400 }
+  },
+  "numberState": {
+    "id": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a73",
+    "session": "739182640518203", "timestamp": "2026-11-01T12:00:00.000Z", "event": "session.status",
+    "payload": { "status": "connected" }
+  },
+  "callEnded": {
+    "id": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a74",
+    "session": "739182640518203", "timestamp": "2026-11-01T12:00:00.000Z", "event": "call.ended",
+    "payload": { "from": { "id": "739182640518205" }, "callId": "SYNTHETIC-CALL", "durationSeconds": 60, "reason": "ended", "direction": "inbound", "hadVideo": false }
+  }
+}

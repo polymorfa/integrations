@@ -1,0 +1,9 @@
+{
+  "condition": "{{polymorfaReceive(parameters.receiverName; parameters.receiverValue; 'callEnded'; headers; body)}}",
+  "respond": {
+    "status": "{{if(polymorfaReceive(parameters.receiverName; parameters.receiverValue; 'callEnded'; headers; body); 200; 401)}}",
+    "type": "json",
+    "body": {}
+  },
+  "output": "{{polymorfaEnvelope(body; 'callEnded')}}"
+}

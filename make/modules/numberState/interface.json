@@ -1,0 +1,124 @@
+[
+  {
+    "name": "id",
+    "label": "id",
+    "type": "text"
+  },
+  {
+    "name": "session",
+    "label": "session",
+    "type": "text"
+  },
+  {
+    "name": "externalId",
+    "label": "externalId",
+    "type": "text"
+  },
+  {
+    "name": "timestamp",
+    "label": "timestamp",
+    "type": "text"
+  },
+  {
+    "name": "event",
+    "label": "event",
+    "type": "text"
+  },
+  {
+    "name": "payload",
+    "label": "payload",
+    "type": "collection",
+    "spec": [
+      {
+        "name": "status",
+        "label": "status",
+        "type": "text"
+      },
+      {
+        "name": "statusReason",
+        "label": "statusReason",
+        "type": "text"
+      },
+      {
+        "name": "banCode",
+        "label": "banCode",
+        "type": "number"
+      },
+      {
+        "name": "banReason",
+        "label": "banReason",
+        "type": "text"
+      },
+      {
+        "name": "banExpiresAt",
+        "label": "banExpiresAt",
+        "type": "number"
+      },
+      {
+        "name": "detail",
+        "label": "detail",
+        "type": "text"
+      },
+      {
+        "name": "source",
+        "label": "source",
+        "type": "text"
+      },
+      {
+        "name": "kind",
+        "label": "kind",
+        "type": "text"
+      },
+      {
+        "name": "wabaId",
+        "label": "wabaId",
+        "type": "text"
+      },
+      {
+        "name": "value",
+        "label": "value",
+        "type": "collection"
+      },
+      {
+        "name": "phoneNumber",
+        "label": "phoneNumber",
+        "type": "text"
+      },
+      {
+        "name": "id",
+        "label": "id",
+        "type": "text"
+      },
+      {
+        "name": "pushName",
+        "label": "pushName",
+        "type": "text"
+      },
+      {
+        "name": "phonePlatform",
+        "label": "phonePlatform",
+        "type": "text"
+      },
+      {
+        "name": "accountType",
+        "label": "accountType",
+        "type": "text"
+      },
+      {
+        "name": "businessName",
+        "label": "businessName",
+        "type": "text"
+      },
+      {
+        "name": "reason",
+        "label": "reason",
+        "type": "text"
+      },
+      {
+        "name": "code",
+        "label": "code",
+        "type": "number"
+      }
+    ]
+  }
+]

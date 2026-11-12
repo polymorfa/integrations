@@ -1,0 +1,14 @@
+[
+  {
+    "name": "apiKey",
+    "type": "password",
+    "label": "Project Token",
+    "required": true
+  },
+  {
+    "name": "projectId",
+    "type": "text",
+    "label": "Project ID",
+    "required": true
+  }
+]

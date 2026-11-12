@@ -1,0 +1,8 @@
+[
+  {
+    "name": "projectSlug",
+    "type": "text",
+    "label": "Project Slug",
+    "required": true
+  }
+]

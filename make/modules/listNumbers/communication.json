@@ -1,0 +1,29 @@
+{
+  "url": "{{get(polymorfaRequest('listNumbers'; parameters; connection); 'url')}}",
+  "method": "{{get(polymorfaRequest('listNumbers'; parameters; connection); 'method')}}",
+  "headers": "{{get(polymorfaRequest('listNumbers'; parameters; connection); 'headers')}}",
+  "qs": "{{get(polymorfaRequest('listNumbers'; parameters; connection); 'query')}}",
+  "body": "{{get(polymorfaRequest('listNumbers'; parameters; connection); 'body')}}",
+  "type": "json",
+  "followRedirect": false,
+  "response": {
+    "valid": "{{polymorfaResult(statusCode; headers; body) != null}}",
+    "output": "{{polymorfaResult(statusCode; headers; body)}}",
+    "error": {
+      "409": {
+        "message": "{{polymorfaError(statusCode; headers; body; get(polymorfaRequest('listNumbers'; parameters; connection); 'method'))}}"
+      },
+      "429": {
+        "type": "RateLimitError",
+        "message": "{{polymorfaError(statusCode; headers; body; get(polymorfaRequest('listNumbers'; parameters; connection); 'method'))}}"
+      },
+      "message": "{{polymorfaError(statusCode; headers; body; get(polymorfaRequest('listNumbers'; parameters; connection); 'method'))}}"
+    }
+  },
+  "log": {
+    "sanitize": [
+      "request.headers.authorization",
+      "request.headers.idempotency-key"
+    ]
+  }
+}

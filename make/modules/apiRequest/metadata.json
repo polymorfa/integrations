@@ -1,0 +1,6 @@
+{
+  "label": "Make an API call",
+  "description": "Calls an allowlisted public operation on the Polymorfa API.",
+  "connection": "project",
+  "type": "action"
+}

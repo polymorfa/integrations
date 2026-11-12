@@ -1,0 +1,141 @@
+[
+  {
+    "name": "data",
+    "label": "data",
+    "type": "array",
+    "spec": {
+      "type": "collection",
+      "spec": [
+        {
+          "name": "_id",
+          "label": "_id",
+          "type": "text"
+        },
+        {
+          "name": "_creationTime",
+          "label": "_creationTime",
+          "type": "number"
+        },
+        {
+          "name": "projectId",
+          "label": "projectId",
+          "type": "text"
+        },
+        {
+          "name": "sessionId",
+          "label": "sessionId",
+          "type": "text"
+        },
+        {
+          "name": "name",
+          "label": "name",
+          "type": "text"
+        },
+        {
+          "name": "phone",
+          "label": "phone",
+          "type": "text"
+        },
+        {
+          "name": "platform",
+          "label": "platform",
+          "type": "text"
+        },
+        {
+          "name": "isBusiness",
+          "label": "isBusiness",
+          "type": "boolean"
+        },
+        {
+          "name": "testMode",
+          "label": "testMode",
+          "type": "boolean"
+        },
+        {
+          "name": "tierOverride",
+          "label": "tierOverride",
+          "type": "text"
+        },
+        {
+          "name": "status",
+          "label": "status",
+          "type": "text"
+        },
+        {
+          "name": "statusReason",
+          "label": "statusReason",
+          "type": "text"
+        },
+        {
+          "name": "messageCount",
+          "label": "messageCount",
+          "type": "number"
+        },
+        {
+          "name": "lastActiveAt",
+          "label": "lastActiveAt",
+          "type": "number"
+        },
+        {
+          "name": "paidUntil",
+          "label": "paidUntil",
+          "type": "number"
+        },
+        {
+          "name": "customer",
+          "label": "customer",
+          "type": "collection",
+          "spec": [
+            {
+              "name": "id",
+              "label": "id",
+              "type": "text"
+            },
+            {
+              "name": "name",
+              "label": "name",
+              "type": "text"
+            },
+            {
+              "name": "isDefault",
+              "label": "isDefault",
+              "type": "boolean"
+            }
+          ]
+        },
+        {
+          "name": "claim",
+          "label": "claim",
+          "type": "collection",
+          "spec": [
+            {
+              "name": "kind",
+              "label": "kind",
+              "type": "text"
+            },
+            {
+              "name": "displayName",
+              "label": "displayName",
+              "type": "text"
+            },
+            {
+              "name": "avatarUrl",
+              "label": "avatarUrl",
+              "type": "text"
+            },
+            {
+              "name": "avatarSeed",
+              "label": "avatarSeed",
+              "type": "text"
+            },
+            {
+              "name": "claimedAt",
+              "label": "claimedAt",
+              "type": "number"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

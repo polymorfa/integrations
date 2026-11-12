@@ -1,0 +1,30 @@
+{
+  "apiVersion": "2026-09-22",
+  "apiSource": "1307601eb7c2eb5e29715d2c1784e38e01e61433",
+  "sdk": {
+    "repository": "polymorfa/sdks",
+    "source": "b3bd05843342275f25f304bfe1fc67ca872740ba",
+    "publishedPackage": null
+  },
+  "specs": {
+    "messaging": {
+      "publicSourcePath": "docs/api-reference/openapi.json",
+      "publicSourceSha256": "4a7b397119f4722b3d2cdcae440a152ca7249ebbc054ed6ebd93c5821f0f28ce",
+      "snapshot": "contracts/openapi.messaging.json",
+      "sha256": "1a92c533626b793e4ed65ef585f7cba37e83a21c38c9bd517c7f1270a38e58c7",
+      "sdkSnapshotPath": "contracts/openapi.messaging.json"
+    },
+    "platform": {
+      "publicSourcePath": "docs/api-reference/openapi.management.json",
+      "publicSourceSha256": "f2e7963d5ddb0070c58dfe049c63e40b8bfdd806b7443f3b670b1e888ee4f10f",
+      "snapshot": "contracts/openapi.platform.json",
+      "sha256": "34a7f677d02899a4a392f68468eca0ee5b3b004416337bb33f46301a3dd06984",
+      "sdkSnapshotPath": "contracts/openapi.platform.json"
+    }
+  },
+  "audience": "published public exports only",
+  "acceptance": {
+    "staging": null,
+    "production": null
+  }
+}

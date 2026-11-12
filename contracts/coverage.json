@@ -1,0 +1,86 @@
+{
+  "operations": {
+    "sendMessage": {
+      "contract": "messaging",
+      "method": "POST",
+      "path": "/messaging/{session}/messages/send",
+      "scope": "messages:write",
+      "sdkOperation": "sendMessage",
+      "purpose": "action"
+    },
+    "sendReaction": {
+      "contract": "messaging",
+      "method": "POST",
+      "path": "/messaging/{session}/messages/react",
+      "scope": "messages:write",
+      "sdkOperation": "sendReaction",
+      "purpose": "action"
+    },
+    "listProjectTemplates": {
+      "contract": "messaging",
+      "method": "GET",
+      "path": "/messaging/projects/{projectSlug}/templates",
+      "scope": "templates:read",
+      "sdkOperation": "listProjectTemplates",
+      "purpose": "action"
+    },
+    "getProjectTemplate": {
+      "contract": "messaging",
+      "method": "GET",
+      "path": "/messaging/projects/{projectSlug}/templates/{id}",
+      "scope": "templates:read",
+      "sdkOperation": "getProjectTemplate",
+      "purpose": "action"
+    },
+    "listPlatformSessions": {
+      "contract": "platform",
+      "method": "GET",
+      "path": "/platform/sessions",
+      "scope": "sessions:read",
+      "sdkOperation": "listPlatformSessions",
+      "purpose": "action"
+    },
+    "listProjectWebhooks": {
+      "contract": "platform",
+      "method": "GET",
+      "path": "/platform/projects/{projectId}/webhooks",
+      "scope": "webhooks:read",
+      "sdkOperation": "listProjectWebhooks",
+      "purpose": "subscription lifecycle"
+    },
+    "createProjectWebhook": {
+      "contract": "platform",
+      "method": "POST",
+      "path": "/platform/projects/{projectId}/webhooks",
+      "scope": "webhooks:manage",
+      "sdkOperation": "createProjectWebhook",
+      "purpose": "subscription lifecycle"
+    },
+    "getProjectWebhook": {
+      "contract": "platform",
+      "method": "GET",
+      "path": "/platform/projects/{projectId}/webhooks/{webhookId}",
+      "scope": "webhooks:read",
+      "sdkOperation": "getProjectWebhook",
+      "purpose": "subscription lifecycle"
+    },
+    "deleteProjectWebhook": {
+      "contract": "platform",
+      "method": "DELETE",
+      "path": "/platform/projects/{projectId}/webhooks/{webhookId}",
+      "scope": "webhooks:manage",
+      "sdkOperation": "deleteProjectWebhook",
+      "purpose": "subscription lifecycle"
+    }
+  },
+  "platforms": [
+    "n8n",
+    "make",
+    "zapier",
+    "pipedream"
+  ],
+  "excluded": {
+    "getMessageOperation": "Absent from published public Messaging export; SDK presence is insufficient.",
+    "runFunction": "Functions deliberately absent from published public Platform export."
+  }
+}

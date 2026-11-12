@@ -1,0 +1,78 @@
+[
+  {
+    "name": "success",
+    "label": "success",
+    "type": "boolean"
+  },
+  {
+    "name": "data",
+    "label": "data",
+    "type": "collection",
+    "spec": [
+      {
+        "name": "id",
+        "label": "id",
+        "type": "text"
+      },
+      {
+        "name": "whatsapp_ids",
+        "label": "whatsapp_ids",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "linked_devices",
+            "label": "linked_devices",
+            "type": "text"
+          },
+          {
+            "name": "official_api",
+            "label": "official_api",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "whatsapp_id",
+        "label": "whatsapp_id",
+        "type": "text"
+      },
+      {
+        "name": "conversation",
+        "label": "conversation",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "id",
+            "label": "id",
+            "type": "text"
+          },
+          {
+            "name": "phoneNumber",
+            "label": "phoneNumber",
+            "type": "text"
+          },
+          {
+            "name": "bsuid",
+            "label": "bsuid",
+            "type": "text"
+          },
+          {
+            "name": "username",
+            "label": "username",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "timestamp",
+        "label": "timestamp",
+        "type": "date"
+      },
+      {
+        "name": "status",
+        "label": "status",
+        "type": "text"
+      }
+    ]
+  }
+]

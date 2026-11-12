@@ -1,0 +1,72 @@
+[
+  {
+    "name": "success",
+    "label": "success",
+    "type": "boolean"
+  },
+  {
+    "name": "data",
+    "label": "data",
+    "type": "array",
+    "spec": {
+      "type": "collection",
+      "spec": [
+        {
+          "name": "id",
+          "label": "id",
+          "type": "text"
+        },
+        {
+          "name": "name",
+          "label": "name",
+          "type": "text"
+        },
+        {
+          "name": "category",
+          "label": "category",
+          "type": "text"
+        },
+        {
+          "name": "language",
+          "label": "language",
+          "type": "text"
+        },
+        {
+          "name": "status",
+          "label": "status",
+          "type": "text"
+        },
+        {
+          "name": "kind",
+          "label": "kind",
+          "type": "text"
+        },
+        {
+          "name": "definition",
+          "label": "definition",
+          "type": "text"
+        },
+        {
+          "name": "sampleValues",
+          "label": "sampleValues",
+          "type": "text"
+        },
+        {
+          "name": "cloudLinks",
+          "label": "cloudLinks",
+          "type": "array"
+        },
+        {
+          "name": "createdAt",
+          "label": "createdAt",
+          "type": "number"
+        },
+        {
+          "name": "updatedAt",
+          "label": "updatedAt",
+          "type": "number"
+        }
+      ]
+    }
+  }
+]
