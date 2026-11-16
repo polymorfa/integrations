@@ -6,7 +6,7 @@ const zapier = require('../zapier');
 const hooks = require('../shared/hooks.cjs');
 const fake = require('./fake-webhooks.cjs');
 const auth = { apiKey: 'synthetic-project-token', projectId: '11111111-1111-4111-8111-111111111111' };
-const input = { operation: 'sendText', session: '739182640518203', recipientType: 'id', recipient: '9007199254740993123', text: 'Synthetic', idempotencyKey: 'synthetic-write-1', writeCreatedAt: new Date().toISOString() };
+const input = { operation: 'sendText', connection: '739182640518203', recipientType: 'id', recipient: '9007199254740993123', text: 'Synthetic', idempotencyKey: 'synthetic-write-1', writeCreatedAt: new Date().toISOString() };
 test('compiled n8n node uses native request helpers, preserved input pairing and disabled redirects', async () => {
   const calls = [];
   const context = {
@@ -80,7 +80,7 @@ test('Zapier routes real throttling middleware through shared parsing and its na
   const response = request => ({ request, status: 429, headers: new Headers({ 'Retry-After': '12' }), content: '{"error":{"code":"rate_limited"}}' });
   assert.throws(() => middleware(response({})), e => e.name === 'ThrottledError');
   const z = { errors, request: async request => middleware(response(request)) };
-  for (const [action, inputData] of [['sendText', input], ['listNumbers', {}]]) {
+  for (const [action, inputData] of [['sendText', input], ['listConnections', {}]]) {
     await assert.rejects(zapier.creates[action].operation.perform(z, { authData: auth, inputData }), e => e.name === 'ThrottledError' && JSON.parse(e.message).delay === 12 && JSON.parse(e.message).message.includes('rate_limited'));
   }
 });

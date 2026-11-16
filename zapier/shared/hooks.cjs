@@ -127,8 +127,8 @@ function authenticate(auth, group, subscriptionKey, incomingHeaders, prefixes = 
   return timingSafeEqual(Buffer.from(entries[0][1]), Buffer.from(expected.value));
 }
 function envelope(body, group) {
-  if (!events[group] || !body || typeof body !== 'object' || Array.isArray(body) || typeof body.id !== 'string' || !body.id || typeof body.session !== 'string' || !body.session || typeof body.timestamp !== 'string' || !Number.isFinite(Date.parse(body.timestamp)) || !events[group].types.includes(body.event) || !body.payload || typeof body.payload !== 'object' || Array.isArray(body.payload)) throw new IntegrationError('invalid_event');
+  if (!events[group] || !body || typeof body !== 'object' || Array.isArray(body) || typeof body.id !== 'string' || !body.id || typeof body.connection !== 'string' || !body.connection || typeof body.timestamp !== 'string' || !Number.isFinite(Date.parse(body.timestamp)) || !events[group].types.includes(body.event) || !body.payload || typeof body.payload !== 'object' || Array.isArray(body.payload)) throw new IntegrationError('invalid_event');
   // Copy the defined envelope only. Never export arbitrary top-level transport fields.
-  return { id: body.id, session: body.session, ...(typeof body.externalId === 'string' ? { externalId: body.externalId } : {}), timestamp: body.timestamp, event: body.event, payload: body.payload };
+  return { id: body.id, connection: body.connection, ...(typeof body.externalId === 'string' ? { externalId: body.externalId } : {}), timestamp: body.timestamp, event: body.event, payload: body.payload };
 }
 module.exports = { identity, callback, sameCallback, creationKey, creation, owns, find, subscribe, activate, unsubscribe, authenticate, envelope };

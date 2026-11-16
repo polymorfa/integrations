@@ -24,7 +24,7 @@ export default {
     "type": "string",
     "label": "Path",
     "optional": false,
-    "description": "A supported relative public API path, for example /platform/sessions. External hosts and credential operations are refused."
+    "description": "A supported relative public API path, for example /platform/connections. External hosts and credential operations are refused."
   },
   "requestBody": {
     "type": "string",

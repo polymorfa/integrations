@@ -21,7 +21,7 @@
     "type": "text",
     "label": "Path",
     "required": true,
-    "help": "A supported relative public API path, for example /platform/sessions. External hosts and credential operations are refused."
+    "help": "A supported relative public API path, for example /platform/connections. External hosts and credential operations are refused."
   },
   {
     "name": "requestBody",

@@ -1,23 +1,23 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Polymorfa automation messaging",
-    "version": "2026-09-22"
-  },
-  "servers": [
-    {
-      "url": "https://api.polymorfa.com"
+    "title": "Polymorfa WhatsApp API",
+    "version": "1.0.0",
+    "description": "Public Polymorfa REST API for connections, messaging, media, webhooks, campaigns, templates, client tokens, QuickLinks, and bridge routing.",
+    "contact": {
+      "name": "Polymorfa API",
+      "url": "https://docs.polymorfa.com"
     }
-  ],
+  },
   "paths": {
-    "/messaging/{session}/messages/send": {
+    "/messaging/{connection}/messages/send": {
       "post": {
         "operationId": "sendMessage",
         "tags": [
           "Messages"
         ],
         "summary": "Send a message",
-        "description": "**Protocols:** Linked Device API · Meta Cloud API\n\n**Required scope:** `messages:write`\n\nSend a message to a conversation. Put exactly one message kind inside content. Testing sessions send only to active testing numbers in the same project; supply the recipient phoneNumber.",
+        "description": "**Protocols:** Linked Device API · Meta Cloud API\n\n**Required scope:** `messages:write`\n\nSend a message to a conversation. Put exactly one message kind inside content. The complete JSON request body is limited to 72 MiB before parsing; decoded media remains limited to 50 MiB. Testing connections send only to active testing connections in the same project; supply the recipient phoneNumber.",
         "security": [
           {
             "BearerAuth": []
@@ -30,14 +30,14 @@
               "type": "string"
             },
             "required": true,
-            "name": "session",
+            "name": "connection",
             "in": "path"
           },
           {
             "name": "Idempotency-Key",
             "in": "header",
             "required": false,
-            "description": "Unique key, 1 to 255 bytes of UTF-8, that makes this write safe to retry for 24 hours. A retry with the same key, credential, `Polymorfa-Version`, and request never runs the write again: it returns `409 idempotency_completed` when the original succeeded, or the original server error, with `Idempotent-Replayed: true`. Reusing the key for a different request returns `409 idempotency_conflict`; a retry while the original is still running returns `409 idempotency_in_progress`, and a retry after an unrecorded outcome returns `409 idempotency_outcome_unknown`.",
+            "description": "Unique key, 1 to 255 bytes of UTF-8, that makes this write safe to retry for 1 hour. A retry with the same key, credential, `Polymorfa-Version`, and request never runs the write again while its receipt is retained. Keep the first response. Exact response replay requires authorized replay data; opaque message or campaign bodies are not retained by default. An available exact replay carries `Idempotent-Replayed: true`. Authorization, rate-limit and state refusals (401, 403, 408, 409, 423, 425, 429) are not recorded, so the same key can retry them. Reusing the key for a different request returns `422 idempotency_conflict`. A retry while the original is still running returns `409 idempotency_in_progress`, and a retry after an unrecorded outcome returns `409 idempotency_outcome_unknown`. If the recorded response cannot be read, the retry returns `503 idempotency_replay_unavailable` with `Retry-After` and the write still does not run again.",
             "schema": {
               "type": "string",
               "minLength": 1,
@@ -73,6 +73,15 @@
               }
             },
             "headers": {
+              "Idempotent-Replayed": {
+                "description": "`true` when this response is the recorded response of an earlier request with the same Idempotency-Key.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true"
+                  ]
+                }
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/X-RateLimit-Limit"
               },
@@ -94,6 +103,15 @@
               }
             },
             "headers": {
+              "Idempotent-Replayed": {
+                "description": "`true` when this response is the recorded response of an earlier request with the same Idempotency-Key.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true"
+                  ]
+                }
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/X-RateLimit-Limit"
               },
@@ -148,7 +166,7 @@
             }
           },
           "402": {
-            "description": "`billing_credit_required`: credit is unavailable for this number. Add credit or review team billing.",
+            "description": "`billing_credit_required`: credit is unavailable for this connection. Add credit or review team billing.",
             "content": {
               "application/json": {
                 "schema": {
@@ -158,7 +176,7 @@
                   "error": {
                     "type": "billing_error",
                     "code": "billing_credit_required",
-                    "message": "Credit is unavailable for this number. Add credit or review team billing.",
+                    "message": "Credit is unavailable for this connection. Add credit or review team billing.",
                     "param": null,
                     "request_id": "5f0c2a8e-3b1d-4c6f-9e2a-7d4b1c8f6a30"
                   },
@@ -222,7 +240,7 @@
             }
           },
           "409": {
-            "description": "`unsupported_for_connection`: call permission requests need a Cloud API number; `call_permission_granted`: the person already granted permanent permission. The Idempotency-Key already succeeded (`idempotency_completed`), was used for a different request (`idempotency_conflict`), belongs to a request that is still running (`idempotency_in_progress`, with Retry-After), or belongs to a request whose outcome was not recorded (`idempotency_outcome_unknown`)",
+            "description": "`unsupported_for_connection`: call permission requests need a Cloud API connection; `call_permission_granted`: the person already granted permanent permission. The Idempotency-Key belongs to a request that is still running (`idempotency_in_progress`, with Retry-After) or whose outcome was not recorded (`idempotency_outcome_unknown`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -232,7 +250,7 @@
                   "error": {
                     "type": "conflict_error",
                     "code": "unsupported_for_connection",
-                    "message": "The session's connection does not support this call operation.",
+                    "message": "The connection's connection does not support this call operation.",
                     "param": null,
                     "request_id": "5f0c2a8e-3b1d-4c6f-9e2a-7d4b1c8f6a30"
                   },
@@ -243,19 +261,16 @@
             },
             "headers": {
               "Retry-After": {
-                "description": "Seconds to wait before retrying `idempotency_in_progress`.",
+                "description": "Seconds to wait before checking again with the same key. Waiting does not release the execution fence or guarantee that replay data becomes available. Same-key retries are protected only within the one-hour receipt window.",
                 "schema": {
                   "type": "integer",
                   "minimum": 0
                 }
               },
-              "Idempotent-Replayed": {
-                "description": "`true` when this response reports the recorded outcome of an earlier request with the same Idempotency-Key.",
+              "Link": {
+                "description": "Link to the documentation for this Idempotency-Key error (`rel=\"describedby\"`).",
                 "schema": {
-                  "type": "string",
-                  "enum": [
-                    "true"
-                  ]
+                  "type": "string"
                 }
               },
               "X-RateLimit-Limit": {
@@ -269,8 +284,8 @@
               }
             }
           },
-          "422": {
-            "description": "The supplied media URL could not be fetched",
+          "413": {
+            "description": "The JSON request exceeds 72 MiB, or decoded media exceeds its size limit",
             "content": {
               "application/json": {
                 "schema": {
@@ -279,6 +294,33 @@
               }
             },
             "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              }
+            }
+          },
+          "422": {
+            "description": "The supplied media URL could not be fetched. The Idempotency-Key was already used for a different request (`idempotency_conflict`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "headers": {
+              "Link": {
+                "description": "Link to the documentation for this Idempotency-Key error (`rel=\"describedby\"`).",
+                "schema": {
+                  "type": "string"
+                }
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/X-RateLimit-Limit"
               },
@@ -328,7 +370,7 @@
                   "error": {
                     "type": "rate_limit_error",
                     "code": "call_permission_request_limited",
-                    "message": "WhatsApp limits how often this number can ask this person for call permission. Follow Retry-After when supplied.",
+                    "message": "WhatsApp limits how often this connection can ask this person for call permission. Follow Retry-After when supplied.",
                     "param": null,
                     "request_id": "5f0c2a8e-3b1d-4c6f-9e2a-7d4b1c8f6a30"
                   },
@@ -360,7 +402,7 @@
             }
           },
           "501": {
-            "description": "`operation_not_supported`: the number's connection cannot send this content, such as a poll, or a URL, call or copy-code button on an official WhatsApp Business number",
+            "description": "`operation_not_supported`: the selected method cannot send this content, such as a poll, or a URL, call or copy-code button on an Official API connection",
             "content": {
               "application/json": {
                 "schema": {
@@ -413,7 +455,7 @@
             }
           },
           "503": {
-            "description": "Session or service unavailable",
+            "description": "Connection or service unavailable. For `idempotency_replay_unavailable` only: the exact response for this Idempotency-Key is unavailable (with Retry-After). Opaque responses are not retained by default. The write did not run again. Keep the first response and reconcile events or the resource; waiting does not guarantee that replay data becomes available. Do not switch keys to resend",
             "content": {
               "application/json": {
                 "schema": {
@@ -422,6 +464,13 @@
               }
             },
             "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before checking again with the same key. Waiting does not release the execution fence or guarantee that replay data becomes available. Same-key retries are protected only within the one-hour receipt window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/X-RateLimit-Limit"
               },
@@ -455,16 +504,13 @@
             }
           }
         },
-        "x-mint": {
-          "content": "<Badge color=\"green\" icon=\"laptop\">Linked Device API</Badge> <Badge color=\"blue\" icon=\"meta\" iconType=\"brands\">Meta Cloud API</Badge> <Badge color=\"yellow\" icon=\"key\">messages:write</Badge>"
-        },
         "x-protocols": [
           "Linked Device API",
           "Meta Cloud API"
         ]
       }
     },
-    "/messaging/{session}/messages/react": {
+    "/messaging/{connection}/messages/react": {
       "post": {
         "operationId": "sendReaction",
         "tags": [
@@ -483,14 +529,14 @@
               "type": "string"
             },
             "required": true,
-            "name": "session",
+            "name": "connection",
             "in": "path"
           },
           {
             "name": "Idempotency-Key",
             "in": "header",
             "required": false,
-            "description": "Unique key, 1 to 255 bytes of UTF-8, that makes this write safe to retry for 24 hours. A retry with the same key, credential, `Polymorfa-Version`, and request never runs the write again: it returns `409 idempotency_completed` when the original succeeded, or the original server error, with `Idempotent-Replayed: true`. Reusing the key for a different request returns `409 idempotency_conflict`; a retry while the original is still running returns `409 idempotency_in_progress`, and a retry after an unrecorded outcome returns `409 idempotency_outcome_unknown`.",
+            "description": "Unique key, 1 to 255 bytes of UTF-8, that makes this write safe to retry for 1 hour. A retry with the same key, credential, `Polymorfa-Version`, and request never runs the write again while its receipt is retained. Keep the first response. Exact response replay requires authorized replay data; opaque message or campaign bodies are not retained by default. An available exact replay carries `Idempotent-Replayed: true`. Authorization, rate-limit and state refusals (401, 403, 408, 409, 423, 425, 429) are not recorded, so the same key can retry them. Reusing the key for a different request returns `422 idempotency_conflict`. A retry while the original is still running returns `409 idempotency_in_progress`, and a retry after an unrecorded outcome returns `409 idempotency_outcome_unknown`. If the recorded response cannot be read, the retry returns `503 idempotency_replay_unavailable` with `Retry-After` and the write still does not run again.",
             "schema": {
               "type": "string",
               "minLength": 1,
@@ -518,6 +564,15 @@
               }
             },
             "headers": {
+              "Idempotent-Replayed": {
+                "description": "`true` when this response is the recorded response of an earlier request with the same Idempotency-Key.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true"
+                  ]
+                }
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/X-RateLimit-Limit"
               },
@@ -539,6 +594,15 @@
               }
             },
             "headers": {
+              "Idempotent-Replayed": {
+                "description": "`true` when this response is the recorded response of an earlier request with the same Idempotency-Key.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true"
+                  ]
+                }
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/X-RateLimit-Limit"
               },
@@ -593,7 +657,7 @@
             }
           },
           "402": {
-            "description": "`billing_credit_required`: credit is unavailable for this number. Add credit or review team billing.",
+            "description": "`billing_credit_required`: credit is unavailable for this connection. Add credit or review team billing.",
             "content": {
               "application/json": {
                 "schema": {
@@ -603,7 +667,7 @@
                   "error": {
                     "type": "billing_error",
                     "code": "billing_credit_required",
-                    "message": "Credit is unavailable for this number. Add credit or review team billing.",
+                    "message": "Credit is unavailable for this connection. Add credit or review team billing.",
                     "param": null,
                     "request_id": "5f0c2a8e-3b1d-4c6f-9e2a-7d4b1c8f6a30"
                   },
@@ -667,7 +731,7 @@
             }
           },
           "409": {
-            "description": "The Idempotency-Key already succeeded (`idempotency_completed`), was used for a different request (`idempotency_conflict`), belongs to a request that is still running (`idempotency_in_progress`, with Retry-After), or belongs to a request whose outcome was not recorded (`idempotency_outcome_unknown`)",
+            "description": "The Idempotency-Key belongs to a request that is still running (`idempotency_in_progress`, with Retry-After) or whose outcome was not recorded (`idempotency_outcome_unknown`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -676,30 +740,27 @@
                 "example": {
                   "error": {
                     "type": "conflict_error",
-                    "code": "idempotency_conflict",
-                    "message": "This Idempotency-Key was already used with a different request. Use a new key for a different request.",
+                    "code": "idempotency_in_progress",
+                    "message": "A request with this Idempotency-Key is still in progress. Check again after Retry-After with the same key within the documented receipt window. Exact response data may be unavailable.",
                     "param": null
                   },
                   "data": null,
-                  "docs": "https://docs.polymorfa.com/api/errors#idempotency-conflict"
+                  "docs": "https://docs.polymorfa.com/api/errors#idempotency-in-progress"
                 }
               }
             },
             "headers": {
               "Retry-After": {
-                "description": "Seconds to wait before retrying `idempotency_in_progress`.",
+                "description": "Seconds to wait before checking again with the same key. Waiting does not release the execution fence or guarantee that replay data becomes available. Same-key retries are protected only within the one-hour receipt window.",
                 "schema": {
                   "type": "integer",
                   "minimum": 0
                 }
               },
-              "Idempotent-Replayed": {
-                "description": "`true` when this response reports the recorded outcome of an earlier request with the same Idempotency-Key.",
+              "Link": {
+                "description": "Link to the documentation for this Idempotency-Key error (`rel=\"describedby\"`).",
                 "schema": {
-                  "type": "string",
-                  "enum": [
-                    "true"
-                  ]
+                  "type": "string"
                 }
               },
               "X-RateLimit-Limit": {
@@ -710,6 +771,43 @@
               },
               "X-RateLimit-Reset": {
                 "$ref": "#/components/headers/X-RateLimit-Reset"
+              }
+            }
+          },
+          "422": {
+            "description": "The Idempotency-Key was already used for a different request (`idempotency_conflict`)",
+            "headers": {
+              "Link": {
+                "description": "Link to the documentation for this Idempotency-Key error (`rel=\"describedby\"`).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                },
+                "example": {
+                  "error": {
+                    "type": "invalid_request_error",
+                    "code": "idempotency_conflict",
+                    "message": "This Idempotency-Key was already used with a different request. Use a new key for a different request.",
+                    "param": null
+                  },
+                  "data": null,
+                  "docs": "https://docs.polymorfa.com/api/errors#idempotency-conflict"
+                }
               }
             }
           },
@@ -756,7 +854,7 @@
             }
           },
           "503": {
-            "description": "Session or service unavailable",
+            "description": "Connection or service unavailable. For `idempotency_replay_unavailable` only: the exact response for this Idempotency-Key is unavailable (with Retry-After). Opaque responses are not retained by default. The write did not run again. Keep the first response and reconcile events or the resource; waiting does not guarantee that replay data becomes available. Do not switch keys to resend",
             "content": {
               "application/json": {
                 "schema": {
@@ -765,6 +863,13 @@
               }
             },
             "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before checking again with the same key. Waiting does not release the execution fence or guarantee that replay data becomes available. Same-key retries are protected only within the one-hour receipt window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/X-RateLimit-Limit"
               },
@@ -797,9 +902,6 @@
               }
             }
           }
-        },
-        "x-mint": {
-          "content": "<Badge color=\"green\" icon=\"laptop\">Linked Device API</Badge> <Badge color=\"blue\" icon=\"meta\" iconType=\"brands\">Meta Cloud API</Badge> <Badge color=\"yellow\" icon=\"key\">messages:write</Badge>"
         },
         "x-protocols": [
           "Linked Device API",
@@ -1013,9 +1115,6 @@
               }
             }
           }
-        },
-        "x-mint": {
-          "content": "<Badge color=\"yellow\" icon=\"key\">templates:read</Badge>"
         },
         "description": "**Required scope:** `templates:read`"
       }
@@ -1234,384 +1333,12 @@
             }
           }
         },
-        "x-mint": {
-          "content": "<Badge color=\"yellow\" icon=\"key\">templates:read</Badge>"
-        },
         "description": "**Required scope:** `templates:read`"
       }
     }
   },
   "components": {
     "schemas": {
-      "MessageReceivedEvent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique event identifier",
-            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
-          },
-          "session": {
-            "type": "string",
-            "description": "Session that produced this event",
-            "example": "739182640518203"
-          },
-          "externalId": {
-            "type": "string",
-            "description": "Integrator reference from the QuickLink that created this session. Included on session lifecycle events when supplied."
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 timestamp",
-            "example": "2026-10-19T14:03:22.000Z"
-          },
-          "event": {
-            "type": "string",
-            "enum": [
-              "message.received"
-            ],
-            "description": "Event type"
-          },
-          "payload": {
-            "$ref": "#/components/schemas/MessageReceivedPayload"
-          }
-        },
-        "required": [
-          "id",
-          "session",
-          "timestamp",
-          "event",
-          "payload"
-        ]
-      },
-      "MessageSentEvent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique event identifier",
-            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
-          },
-          "session": {
-            "type": "string",
-            "description": "Session that produced this event",
-            "example": "739182640518203"
-          },
-          "externalId": {
-            "type": "string",
-            "description": "Integrator reference from the QuickLink that created this session. Included on session lifecycle events when supplied."
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 timestamp",
-            "example": "2026-10-19T14:03:22.000Z"
-          },
-          "event": {
-            "type": "string",
-            "enum": [
-              "message.sent"
-            ],
-            "description": "Event type"
-          },
-          "payload": {
-            "$ref": "#/components/schemas/MessageSentPayload"
-          }
-        },
-        "required": [
-          "id",
-          "session",
-          "timestamp",
-          "event",
-          "payload"
-        ]
-      },
-      "MessageAckEvent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique event identifier",
-            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
-          },
-          "session": {
-            "type": "string",
-            "description": "Session that produced this event",
-            "example": "739182640518203"
-          },
-          "externalId": {
-            "type": "string",
-            "description": "Integrator reference from the QuickLink that created this session. Included on session lifecycle events when supplied."
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 timestamp",
-            "example": "2026-10-19T14:03:22.000Z"
-          },
-          "event": {
-            "type": "string",
-            "enum": [
-              "message.ack"
-            ],
-            "description": "Event type"
-          },
-          "payload": {
-            "$ref": "#/components/schemas/MessageAckPayload"
-          }
-        },
-        "required": [
-          "id",
-          "session",
-          "timestamp",
-          "event",
-          "payload"
-        ]
-      },
-      "MessageFailedEvent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique event identifier",
-            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
-          },
-          "session": {
-            "type": "string",
-            "description": "Session that produced this event",
-            "example": "739182640518203"
-          },
-          "externalId": {
-            "type": "string",
-            "description": "Integrator reference from the QuickLink that created this session. Included on session lifecycle events when supplied."
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 timestamp",
-            "example": "2026-10-19T14:03:22.000Z"
-          },
-          "event": {
-            "type": "string",
-            "enum": [
-              "message.failed"
-            ],
-            "description": "Event type"
-          },
-          "payload": {
-            "$ref": "#/components/schemas/MessageFailedPayload"
-          }
-        },
-        "required": [
-          "id",
-          "session",
-          "timestamp",
-          "event",
-          "payload"
-        ]
-      },
-      "MessageUpdateEvent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique event identifier",
-            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
-          },
-          "session": {
-            "type": "string",
-            "description": "Session that produced this event",
-            "example": "739182640518203"
-          },
-          "externalId": {
-            "type": "string",
-            "description": "Integrator reference from the QuickLink that created this session. Included on session lifecycle events when supplied."
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 timestamp",
-            "example": "2026-10-19T14:03:22.000Z"
-          },
-          "event": {
-            "type": "string",
-            "enum": [
-              "message.update"
-            ],
-            "description": "Event type"
-          },
-          "payload": {
-            "$ref": "#/components/schemas/MessagePayload"
-          }
-        },
-        "required": [
-          "id",
-          "session",
-          "timestamp",
-          "event",
-          "payload"
-        ]
-      },
-      "SessionStatusEvent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique event identifier",
-            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
-          },
-          "session": {
-            "type": "string",
-            "description": "Session that produced this event",
-            "example": "739182640518203"
-          },
-          "externalId": {
-            "type": "string",
-            "description": "Integrator reference from the QuickLink that created this session. Included on session lifecycle events when supplied."
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 timestamp",
-            "example": "2026-10-19T14:03:22.000Z"
-          },
-          "event": {
-            "type": "string",
-            "enum": [
-              "session.status"
-            ],
-            "description": "Event type"
-          },
-          "payload": {
-            "$ref": "#/components/schemas/SessionStatusPayload"
-          }
-        },
-        "required": [
-          "id",
-          "session",
-          "timestamp",
-          "event",
-          "payload"
-        ]
-      },
-      "SessionConnectedEvent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique event identifier",
-            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
-          },
-          "session": {
-            "type": "string",
-            "description": "Session that produced this event",
-            "example": "739182640518203"
-          },
-          "externalId": {
-            "type": "string",
-            "description": "Integrator reference from the QuickLink that created this session. Included on session lifecycle events when supplied."
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 timestamp",
-            "example": "2026-10-19T14:03:22.000Z"
-          },
-          "event": {
-            "type": "string",
-            "enum": [
-              "session.connected"
-            ],
-            "description": "Event type"
-          },
-          "payload": {
-            "$ref": "#/components/schemas/SessionConnectedPayload"
-          }
-        },
-        "required": [
-          "id",
-          "session",
-          "timestamp",
-          "event",
-          "payload"
-        ]
-      },
-      "SessionLoggedOutEvent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique event identifier",
-            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
-          },
-          "session": {
-            "type": "string",
-            "description": "Session that produced this event",
-            "example": "739182640518203"
-          },
-          "externalId": {
-            "type": "string",
-            "description": "Integrator reference from the QuickLink that created this session. Included on session lifecycle events when supplied."
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 timestamp",
-            "example": "2026-10-19T14:03:22.000Z"
-          },
-          "event": {
-            "type": "string",
-            "enum": [
-              "session.logged_out"
-            ],
-            "description": "Event type"
-          },
-          "payload": {
-            "$ref": "#/components/schemas/SessionLoggedOutPayload"
-          }
-        },
-        "required": [
-          "id",
-          "session",
-          "timestamp",
-          "event",
-          "payload"
-        ]
-      },
-      "CallEndedEvent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique event identifier",
-            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
-          },
-          "session": {
-            "type": "string",
-            "description": "Session that produced this event",
-            "example": "739182640518203"
-          },
-          "externalId": {
-            "type": "string",
-            "description": "Integrator reference from the QuickLink that created this session. Included on session lifecycle events when supplied."
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 timestamp",
-            "example": "2026-10-19T14:03:22.000Z"
-          },
-          "event": {
-            "type": "string",
-            "enum": [
-              "call.ended"
-            ],
-            "description": "Event type"
-          },
-          "payload": {
-            "$ref": "#/components/schemas/CallEndedPayload"
-          }
-        },
-        "required": [
-          "id",
-          "session",
-          "timestamp",
-          "event",
-          "payload"
-        ]
-      },
       "SendMessageRequest": {
         "type": "object",
         "properties": {
@@ -1801,7 +1528,7 @@
                     "type": "string",
                     "minLength": 4,
                     "maxLength": 21848,
-                    "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices numbers only."
+                    "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices connections only."
                   },
                   "descriptor": {
                     "$ref": "#/components/schemas/VideoMediaDescriptor"
@@ -1846,7 +1573,7 @@
                     "type": "string",
                     "minLength": 4,
                     "maxLength": 21848,
-                    "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices numbers only."
+                    "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices connections only."
                   },
                   "descriptor": {
                     "$ref": "#/components/schemas/FileMediaDescriptor"
@@ -1905,18 +1632,479 @@
               "sticker": {
                 "type": "object",
                 "properties": {
+                  "url": {
+                    "type": "string",
+                    "maxLength": 4096,
+                    "format": "uri"
+                  },
+                  "base64": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 28000000
+                  },
                   "descriptor": {
                     "$ref": "#/components/schemas/StickerMediaDescriptor"
+                  },
+                  "emojis": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "maxItems": 10
+                  },
+                  "accessibilityLabel": {
+                    "type": "string",
+                    "minLength": 0
                   }
                 },
-                "required": [
-                  "descriptor"
-                ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "oneOf": [
+                  {
+                    "required": [
+                      "url"
+                    ],
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "base64"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "descriptor"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "required": [
+                      "base64"
+                    ],
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "url"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "descriptor"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "required": [
+                      "descriptor"
+                    ],
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "url"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "base64"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
               }
             },
             "required": [
               "sticker"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "stickerPack": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "publisher": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "description": {
+                        "type": "string",
+                        "minLength": 0
+                      },
+                      "caption": {
+                        "type": "string",
+                        "minLength": 0
+                      },
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "emojis": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "maxItems": 10
+                            },
+                            "accessibilityLabel": {
+                              "type": "string",
+                              "minLength": 0
+                            },
+                            "fileName": {
+                              "type": "string",
+                              "minLength": 1,
+                              "pattern": "^[^/\\\\:\\x00]+$"
+                            },
+                            "url": {
+                              "type": "string",
+                              "maxLength": 4096,
+                              "format": "uri"
+                            },
+                            "base64": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 28000000
+                            }
+                          },
+                          "additionalProperties": false,
+                          "oneOf": [
+                            {
+                              "required": [
+                                "url"
+                              ],
+                              "not": {
+                                "anyOf": [
+                                  {
+                                    "required": [
+                                      "base64"
+                                    ]
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "required": [
+                                "base64"
+                              ],
+                              "not": {
+                                "anyOf": [
+                                  {
+                                    "required": [
+                                      "url"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 100
+                      },
+                      "trayIcon": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string",
+                            "maxLength": 4096,
+                            "format": "uri"
+                          },
+                          "base64": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 28000000
+                          }
+                        },
+                        "additionalProperties": false,
+                        "oneOf": [
+                          {
+                            "required": [
+                              "url"
+                            ],
+                            "not": {
+                              "anyOf": [
+                                {
+                                  "required": [
+                                    "base64"
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "required": [
+                              "base64"
+                            ],
+                            "not": {
+                              "anyOf": [
+                                {
+                                  "required": [
+                                    "url"
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "publisher",
+                      "items"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Convert up to 100 image items. Items and an explicit tray share 64 MiB of input and 128 million source plus 512px output frame pixels. Preparation stops at the command deadline or 30 seconds, whichever comes first. Reduce dimensions, frame counts or item count if the pack exceeds these limits."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "publisher": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "description": {
+                        "type": "string",
+                        "minLength": 0
+                      },
+                      "caption": {
+                        "type": "string",
+                        "minLength": 0
+                      },
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "fileName": {
+                              "type": "string",
+                              "minLength": 1,
+                              "pattern": "^[^/\\\\:\\x00]+$"
+                            },
+                            "stickerType": {
+                              "type": "string",
+                              "enum": [
+                                "static",
+                                "animated",
+                                "lottie"
+                              ]
+                            },
+                            "emojis": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "maxItems": 10
+                            },
+                            "accessibilityLabel": {
+                              "type": "string",
+                              "minLength": 0
+                            }
+                          },
+                          "required": [
+                            "fileName",
+                            "stickerType"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "minItems": 1,
+                        "maxItems": 100
+                      },
+                      "descriptor": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string",
+                            "maxLength": 2048,
+                            "pattern": "^https:\\/\\/[!-~]+$",
+                            "description": "Media URL returned by the upload."
+                          },
+                          "directPath": {
+                            "type": "string",
+                            "maxLength": 2048,
+                            "pattern": "^\\/(?!\\/)[!-~]+$",
+                            "description": "Direct path returned by the upload."
+                          },
+                          "mediaKey": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+                            "description": "Base64 32-byte media key you encrypted the file with."
+                          },
+                          "fileSha256": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+                            "description": "Base64 SHA-256 of the plaintext file."
+                          },
+                          "fileEncSha256": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+                            "description": "Base64 SHA-256 of the uploaded ciphertext and MAC."
+                          },
+                          "fileLength": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 2147483648,
+                            "description": "Plaintext file size in bytes."
+                          },
+                          "mimeType": {
+                            "type": "string",
+                            "enum": [
+                              "application/zip"
+                            ]
+                          },
+                          "mediaKeyTimestamp": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 1099511627776,
+                            "description": "Unix time in seconds when the media key was created."
+                          }
+                        },
+                        "required": [
+                          "url",
+                          "directPath",
+                          "mediaKey",
+                          "fileSha256",
+                          "fileEncSha256",
+                          "fileLength",
+                          "mimeType"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "trayIconFileName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^[^/\\\\:\\x00]+$"
+                      },
+                      "thumbnailDescriptor": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string",
+                            "maxLength": 2048,
+                            "pattern": "^https:\\/\\/[!-~]+$",
+                            "description": "Media URL returned by the upload."
+                          },
+                          "directPath": {
+                            "type": "string",
+                            "maxLength": 2048,
+                            "pattern": "^\\/(?!\\/)[!-~]+$",
+                            "description": "Direct path returned by the upload."
+                          },
+                          "mediaKey": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+                            "description": "Base64 32-byte media key you encrypted the file with."
+                          },
+                          "fileSha256": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+                            "description": "Base64 SHA-256 of the plaintext file."
+                          },
+                          "fileEncSha256": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+                            "description": "Base64 SHA-256 of the uploaded ciphertext and MAC."
+                          },
+                          "fileLength": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 2147483648,
+                            "description": "Plaintext file size in bytes."
+                          },
+                          "mimeType": {
+                            "type": "string",
+                            "enum": [
+                              "image/png"
+                            ]
+                          },
+                          "mediaKeyTimestamp": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 1099511627776,
+                            "description": "Unix time in seconds when the media key was created."
+                          },
+                          "width": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65536,
+                            "description": "Width in pixels. Send with height."
+                          },
+                          "height": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65536,
+                            "description": "Height in pixels. Send with width."
+                          }
+                        },
+                        "required": [
+                          "url",
+                          "directPath",
+                          "mediaKey",
+                          "fileSha256",
+                          "fileEncSha256",
+                          "fileLength",
+                          "mimeType"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "publisher",
+                      "items",
+                      "descriptor"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "forwardMedia": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9+/]+={0,2}$"
+                      }
+                    },
+                    "required": [
+                      "forwardMedia"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "stickerPack"
             ],
             "additionalProperties": false
           },
@@ -2332,7 +2520,7 @@
                   "buttonText",
                   "sections"
                 ],
-                "description": "On an official WhatsApp Business number, `title` is the header (at most 60 characters) and `description` the body (at most 1,024 characters); without `description`, `title` is the body. There, each section title allows at most 24 characters and is required when the list has more than one section, lists allow at most 10 rows in total, row titles at most 24 characters, row IDs at most 200, row descriptions at most 72, `buttonText` at most 20 and `footer` at most 60. Every number also limits `buttonText` to 64 UTF-8 bytes, row `id` to 256 bytes and `title` and `description` to 256 and 4,096 bytes, so multibyte text reaches those byte limits before the character limits. Content outside any limit returns `400`."
+                "description": "On an Official API connection, `title` is the header (at most 60 characters) and `description` the body (at most 1,024 characters); without `description`, `title` is the body. There, each section title allows at most 24 characters and is required when the list has more than one section, lists allow at most 10 rows in total, row titles at most 24 characters, row IDs at most 200, row descriptions at most 72, `buttonText` at most 20 and `footer` at most 60. Every connection also limits `buttonText` to 64 UTF-8 bytes, row `id` to 256 bytes and `title` and `description` to 256 and 4,096 bytes, so multibyte text reaches those byte limits before the character limits. Content outside any limit returns `400`."
               }
             },
             "required": [
@@ -2343,9 +2531,431 @@
           {
             "type": "object",
             "properties": {
+              "carousel": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "footer": {
+                    "type": "string",
+                    "minLength": 0
+                  },
+                  "cards": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "body": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "buttons": {
+                              "type": "array",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "url"
+                                        ]
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "url": {
+                                        "type": "string",
+                                        "maxLength": 2048,
+                                        "format": "uri"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text",
+                                      "url"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "call"
+                                        ]
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "phoneNumber": {
+                                        "type": "string",
+                                        "pattern": "^\\+?\\d{6,20}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text",
+                                      "phoneNumber"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "reply"
+                                        ]
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "id": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text",
+                                      "id"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "copy"
+                                        ]
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "copyCode": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text",
+                                      "copyCode"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "catalog"
+                                        ]
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "businessPhoneNumber": {
+                                        "type": "string",
+                                        "pattern": "^\\+?\\d{6,20}$"
+                                      },
+                                      "catalogProductId": {
+                                        "type": "string",
+                                        "minLength": 0
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text",
+                                      "businessPhoneNumber"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "minItems": 1,
+                              "maxItems": 10
+                            },
+                            "image": {
+                              "type": "object",
+                              "properties": {
+                                "url": {
+                                  "type": "string",
+                                  "maxLength": 4096,
+                                  "format": "uri"
+                                },
+                                "base64": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 70000000
+                                },
+                                "mimeType": {
+                                  "type": "string",
+                                  "minLength": 0
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "body",
+                            "buttons",
+                            "image"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "body": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "buttons": {
+                              "type": "array",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "url"
+                                        ]
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "url": {
+                                        "type": "string",
+                                        "maxLength": 2048,
+                                        "format": "uri"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text",
+                                      "url"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "call"
+                                        ]
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "phoneNumber": {
+                                        "type": "string",
+                                        "pattern": "^\\+?\\d{6,20}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text",
+                                      "phoneNumber"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "reply"
+                                        ]
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "id": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text",
+                                      "id"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "copy"
+                                        ]
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "copyCode": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text",
+                                      "copyCode"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "catalog"
+                                        ]
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "businessPhoneNumber": {
+                                        "type": "string",
+                                        "pattern": "^\\+?\\d{6,20}$"
+                                      },
+                                      "catalogProductId": {
+                                        "type": "string",
+                                        "minLength": 0
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text",
+                                      "businessPhoneNumber"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "minItems": 1,
+                              "maxItems": 10
+                            },
+                            "video": {
+                              "type": "object",
+                              "properties": {
+                                "url": {
+                                  "type": "string",
+                                  "maxLength": 4096,
+                                  "format": "uri"
+                                },
+                                "base64": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 70000000
+                                },
+                                "mimeType": {
+                                  "type": "string",
+                                  "minLength": 0
+                                },
+                                "thumbnail": {
+                                  "type": "string",
+                                  "minLength": 4,
+                                  "maxLength": 21848,
+                                  "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices connections only."
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "body",
+                            "buttons",
+                            "video"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "minItems": 2,
+                    "maxItems": 10
+                  }
+                },
+                "required": [
+                  "body",
+                  "cards"
+                ],
+                "additionalProperties": false,
+                "description": "Linked Devices only: one message with 2–10 image/video cards and native buttons per card. Each card accepts up to ten replies or three CTAs without mixing; reply IDs are unique across cards. Combined media is bounded to 50 MiB. Official approved carousel templates use content.template instead."
+              }
+            },
+            "required": [
+              "carousel"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
               "buttons": {
                 "type": "object",
                 "properties": {
+                  "media": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "maxLength": 4096,
+                        "format": "uri"
+                      },
+                      "base64": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 70000000
+                      },
+                      "mimeType": {
+                        "type": "string",
+                        "minLength": 0
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "image",
+                          "video",
+                          "document"
+                        ]
+                      },
+                      "filename": {
+                        "type": "string",
+                        "minLength": 0
+                      },
+                      "thumbnail": {
+                        "type": "string",
+                        "minLength": 4,
+                        "maxLength": 21848,
+                        "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices connections only."
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "additionalProperties": false
+                  },
                   "title": {
                     "type": "string",
                     "minLength": 0
@@ -2490,14 +3100,14 @@
                       ]
                     },
                     "minItems": 1,
-                    "maxItems": 3
+                    "maxItems": 10
                   }
                 },
                 "required": [
                   "body",
                   "buttons"
                 ],
-                "description": "On an official WhatsApp Business number, only `reply` buttons are sent; other button types return `501`. There, `body` allows at most 1,024 characters, `title` and `footer` at most 60, and each button needs a unique `id` and a unique `text` of at most 20 characters. Every number also limits each button `id` to 256 UTF-8 bytes. Content outside any limit returns `400`."
+                "description": "Linked Devices support up to 10 total buttons and at most 3 CTAs. Replies may be mixed with URL and call buttons using a hydrated template; copy/catalog buttons cannot be mixed with replies. An optional image, video or document header requires exactly one URL or base64 source and cannot be combined with a title. On an Official API connection, media headers require an approved template, and at most 3 `reply` buttons are sent; other button types return `501`. There, `body` allows at most 1,024 characters, `title` and `footer` at most 60, and each button needs a unique `id` and a unique `text` of at most 20 characters. Every connection also limits each button `id` to 256 UTF-8 bytes. Content outside any limit returns `400`."
               }
             },
             "required": [
@@ -2648,7 +3258,7 @@
                   "body"
                 ],
                 "additionalProperties": false,
-                "description": "Ask the person for permission to call them. Cloud API numbers only; WhatsApp limits how often you can ask."
+                "description": "Ask the person for permission to call them. Cloud API connections only; WhatsApp limits how often you can ask."
               }
             },
             "required": [
@@ -2743,7 +3353,7 @@
             "type": "string",
             "minLength": 4,
             "maxLength": 21848,
-            "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices numbers only."
+            "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices connections only."
           },
           "width": {
             "type": "integer",
@@ -2823,7 +3433,7 @@
             "type": "string",
             "minLength": 4,
             "maxLength": 21848,
-            "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices numbers only."
+            "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices connections only."
           },
           "width": {
             "type": "integer",
@@ -2909,7 +3519,7 @@
             "type": "string",
             "minLength": 4,
             "maxLength": 21848,
-            "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices numbers only."
+            "description": "Base64-encoded JPEG preview shown before the media downloads, at most 16 KiB. Linked Devices connections only."
           }
         },
         "required": [
@@ -3036,7 +3646,8 @@
           "mimeType": {
             "type": "string",
             "enum": [
-              "image/webp"
+              "image/webp",
+              "application/was"
             ]
           },
           "mediaKeyTimestamp": {
@@ -3057,8 +3668,13 @@
             "maximum": 65536,
             "description": "Height in pixels. Send with width."
           },
-          "isAnimated": {
-            "type": "boolean"
+          "stickerType": {
+            "type": "string",
+            "enum": [
+              "static",
+              "animated",
+              "lottie"
+            ]
           }
         },
         "required": [
@@ -3070,7 +3686,41 @@
           "fileLength",
           "mimeType"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "properties": {
+              "mimeType": {
+                "enum": [
+                  "image/webp"
+                ]
+              },
+              "stickerType": {
+                "enum": [
+                  "static",
+                  "animated"
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "mimeType": {
+                "enum": [
+                  "application/was"
+                ]
+              },
+              "stickerType": {
+                "enum": [
+                  "lottie"
+                ]
+              }
+            },
+            "required": [
+              "stickerType"
+            ]
+          }
+        ]
       },
       "SendMessageResponse": {
         "type": "object",
@@ -3274,7 +3924,7 @@
               "code": {
                 "type": "string",
                 "enum": [
-                  "zero_knowledge_session",
+                  "zero_knowledge_connection",
                   "invalid_parameter",
                   "invalid_credential",
                   "entitlement_required",
@@ -3298,10 +3948,12 @@
                   "team_deletion_scheduled",
                   "hybrid_choice_required",
                   "hybrid_group_linked_devices_unavailable",
+                  "terms_acceptance_required",
+                  "terms_activation_blocked",
                   "idempotency_conflict",
                   "idempotency_in_progress",
-                  "idempotency_completed",
                   "idempotency_outcome_unknown",
+                  "idempotency_replay_unavailable",
                   "call_claimed",
                   "call_not_ringing",
                   "connection_limit",
@@ -3314,7 +3966,7 @@
                   "call_permission_request_limited",
                   "call_permission_granted",
                   "call_opt_out_limit",
-                  "number_restricted",
+                  "connection_restricted",
                   "sip_trunk_in_use",
                   "sip_trunk_revision_conflict",
                   "sip_trunk_limit",
@@ -3332,7 +3984,7 @@
                   "upstream_failure",
                   "service_unavailable",
                   "credential_verification_unavailable",
-                  "session_not_ready",
+                  "connection_not_ready",
                   "command_dispatch_failed",
                   "result_unknown",
                   "parent_bsuid_not_supported",
@@ -3348,7 +4000,7 @@
                   "whatsapp_payment_method_required",
                   "whatsapp_number_not_registered",
                   "bansafe_suspended",
-                  "bansafe_org_suspended",
+                  "bansafe_team_suspended",
                   "bansafe_cold_blocked",
                   "bansafe_cold_held",
                   "bansafe_throttled",
@@ -3376,7 +4028,7 @@
               "request_log_url": {
                 "type": "string",
                 "format": "uri",
-                "description": "Console page that shows this request. Returned only to organization and project credentials whose request was logged."
+                "description": "Console page that shows this request. Returned only to team and project credentials whose request was logged."
               }
             },
             "required": [
@@ -3578,6 +4230,47 @@
           "data"
         ]
       },
+      "MessageReceivedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique event identifier",
+            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection that produced this event",
+            "example": "739182640518203"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Integrator reference from the QuickLink that created this connection. Included on connection lifecycle events when supplied."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp",
+            "example": "2026-10-19T14:03:22.000Z"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "message.received"
+            ],
+            "description": "Event type"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/MessageReceivedPayload"
+          }
+        },
+        "required": [
+          "id",
+          "connection",
+          "timestamp",
+          "event",
+          "payload"
+        ]
+      },
       "MessageReceivedPayload": {
         "oneOf": [
           {
@@ -3638,6 +4331,7 @@
               "list_reply",
               "poll",
               "sticker",
+              "sticker_pack",
               "reaction",
               "revoke",
               "edited",
@@ -3759,6 +4453,33 @@
           },
           "unavailableReason": {
             "type": "string"
+          },
+          "stickerType": {
+            "type": "string",
+            "enum": [
+              "static",
+              "animated",
+              "lottie"
+            ]
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "avatar",
+              "ai"
+            ]
+          },
+          "emojis": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accessibilityLabel": {
+            "type": "string"
+          },
+          "stickerPack": {
+            "$ref": "#/components/schemas/StickerPackMetadata"
           },
           "width": {
             "type": "integer",
@@ -3895,6 +4616,74 @@
         "required": [
           "name",
           "hash"
+        ]
+      },
+      "StickerPackMetadata": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "trayIconFileName": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StickerPackItem"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "publisher",
+          "items"
+        ]
+      },
+      "StickerPackItem": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "stickerType": {
+            "type": "string",
+            "enum": [
+              "static",
+              "animated",
+              "lottie"
+            ]
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "emojis": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accessibilityLabel": {
+            "type": "string"
+          },
+          "premium": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fileName",
+          "stickerType",
+          "mimeType"
         ]
       },
       "MediaThumbnail": {
@@ -4156,6 +4945,47 @@
           "currency"
         ]
       },
+      "MessageSentEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique event identifier",
+            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection that produced this event",
+            "example": "739182640518203"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Integrator reference from the QuickLink that created this connection. Included on connection lifecycle events when supplied."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp",
+            "example": "2026-10-19T14:03:22.000Z"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "message.sent"
+            ],
+            "description": "Event type"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/MessageSentPayload"
+          }
+        },
+        "required": [
+          "id",
+          "connection",
+          "timestamp",
+          "event",
+          "payload"
+        ]
+      },
       "MessageSentPayload": {
         "type": "object",
         "properties": {
@@ -4183,6 +5013,33 @@
           },
           "timestamp": {
             "type": "number"
+          },
+          "stickerType": {
+            "type": "string",
+            "enum": [
+              "static",
+              "animated",
+              "lottie"
+            ]
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "avatar",
+              "ai"
+            ]
+          },
+          "emojis": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accessibilityLabel": {
+            "type": "string"
+          },
+          "stickerPack": {
+            "$ref": "#/components/schemas/StickerPackMetadata"
           },
           "width": {
             "type": "integer",
@@ -4242,6 +5099,47 @@
           "conversation",
           "type",
           "timestamp"
+        ]
+      },
+      "MessageAckEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique event identifier",
+            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection that produced this event",
+            "example": "739182640518203"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Integrator reference from the QuickLink that created this connection. Included on connection lifecycle events when supplied."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp",
+            "example": "2026-10-19T14:03:22.000Z"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "message.ack"
+            ],
+            "description": "Event type"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/MessageAckPayload"
+          }
+        },
+        "required": [
+          "id",
+          "connection",
+          "timestamp",
+          "event",
+          "payload"
         ]
       },
       "MessageAckPayload": {
@@ -4327,78 +5225,104 @@
         },
         "description": "Official API only. The pricing classification WhatsApp reported for this message, copied as reported. Meta bills your WhatsApp Business Account directly; this is not a Polymorfa charge and contains no price."
       },
-      "MessageFailedPayload": {
+      "MessageUpdateEvent": {
         "type": "object",
         "properties": {
-          "to": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/IdentityRef"
-              },
-              {
-                "description": "Recipient chat the send was attempted to"
-              }
-            ]
-          },
-          "type": {
+          "id": {
             "type": "string",
-            "description": "Type of the attempted message (text, image, ...)",
-            "example": "text"
+            "description": "Unique event identifier",
+            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
           },
-          "error": {
+          "connection": {
             "type": "string",
-            "enum": [
-              "invalid_recipient",
-              "session_not_connected",
-              "ack_timeout",
-              "send_failed",
-              "blocked_by_safety"
-            ],
-            "description": "Sanitized failure class",
-            "example": "send_failed"
+            "description": "Connection that produced this event",
+            "example": "739182640518203"
           },
-          "code": {
+          "externalId": {
             "type": "string",
-            "description": "Stable machine-readable code from the API error envelope, present for classified safety refusals and an unknown send outcome",
-            "example": "bansafe_cold_blocked"
-          },
-          "retryAfter": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true,
-            "description": "Whole seconds to wait before retrying a paced send, exhausted allowance, or temporary allowance-accounting pause",
-            "example": 5
+            "description": "Integrator reference from the QuickLink that created this connection. Included on connection lifecycle events when supplied."
           },
           "timestamp": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Unix timestamp in seconds when the failure occurred",
-            "example": 1757161200
+            "type": "string",
+            "description": "ISO 8601 timestamp",
+            "example": "2026-10-19T14:03:22.000Z"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "message.update"
+            ],
+            "description": "Event type"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/MessagePayload"
           }
         },
         "required": [
-          "to",
-          "type",
-          "error",
-          "timestamp"
+          "id",
+          "connection",
+          "timestamp",
+          "event",
+          "payload"
         ]
       },
-      "SessionStatusPayload": {
+      "ConnectionStatusEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique event identifier",
+            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection that produced this event",
+            "example": "739182640518203"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Integrator reference from the QuickLink that created this connection. Included on connection lifecycle events when supplied."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp",
+            "example": "2026-10-19T14:03:22.000Z"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "connection.status"
+            ],
+            "description": "Event type"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/ConnectionStatusPayload"
+          }
+        },
+        "required": [
+          "id",
+          "connection",
+          "timestamp",
+          "event",
+          "payload"
+        ]
+      },
+      "ConnectionStatusPayload": {
         "anyOf": [
           {
-            "$ref": "#/components/schemas/RuntimeSessionStatusPayload"
+            "$ref": "#/components/schemas/RuntimeConnectionStatusPayload"
           },
           {
             "$ref": "#/components/schemas/CloudAccountStatusPayload"
           }
         ]
       },
-      "RuntimeSessionStatusPayload": {
+      "RuntimeConnectionStatusPayload": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "description": "Session status: CONNECTING, CONNECTED, DISCONNECTED",
+            "description": "Connection status: CONNECTING, CONNECTED, DISCONNECTED",
             "example": "DISCONNECTED"
           },
           "statusReason": {
@@ -4440,7 +5364,7 @@
             "enum": [
               "meta"
             ],
-            "description": "Always `meta`: a WhatsApp Business Account notification, not a connection-state change"
+            "description": "Always `meta`: a WhatsApp Business Account notification, not a method-state change"
           },
           "kind": {
             "type": "string",
@@ -4468,7 +5392,48 @@
           "value"
         ]
       },
-      "SessionConnectedPayload": {
+      "ConnectionConnectedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique event identifier",
+            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection that produced this event",
+            "example": "739182640518203"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Integrator reference from the QuickLink that created this connection. Included on connection lifecycle events when supplied."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp",
+            "example": "2026-10-19T14:03:22.000Z"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "connection.connected"
+            ],
+            "description": "Event type"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/ConnectionConnectedPayload"
+          }
+        },
+        "required": [
+          "id",
+          "connection",
+          "timestamp",
+          "event",
+          "payload"
+        ]
+      },
+      "ConnectionConnectedPayload": {
         "type": "object",
         "properties": {
           "phoneNumber": {
@@ -4493,7 +5458,7 @@
             "x-enumDescriptions": {
               "android": "WhatsApp or WhatsApp Business on an Android phone.",
               "ios": "WhatsApp or WhatsApp Business on an iPhone.",
-              "meta_cloud": "Meta hosts the number through Cloud API.",
+              "meta_cloud": "Meta hosts the connection through Cloud API.",
               "unknown": "The phone has not reported a recognized platform."
             }
           },
@@ -4524,7 +5489,48 @@
           "accountType"
         ]
       },
-      "SessionLoggedOutPayload": {
+      "ConnectionLoggedOutEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique event identifier",
+            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection that produced this event",
+            "example": "739182640518203"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Integrator reference from the QuickLink that created this connection. Included on connection lifecycle events when supplied."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp",
+            "example": "2026-10-19T14:03:22.000Z"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "connection.logged_out"
+            ],
+            "description": "Event type"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/ConnectionLoggedOutPayload"
+          }
+        },
+        "required": [
+          "id",
+          "connection",
+          "timestamp",
+          "event",
+          "payload"
+        ]
+      },
+      "ConnectionLoggedOutPayload": {
         "type": "object",
         "properties": {
           "reason": {
@@ -4534,7 +5540,7 @@
               "device_removed",
               "unknown"
             ],
-            "description": "Why the session was logged out: `banned` when WhatsApp banned the account, `device_removed` when the linked device was removed from the phone or from another device, `unknown` otherwise (including a locked account).",
+            "description": "Why the connection was logged out: `banned` when WhatsApp banned the account, `device_removed` when the linked device was removed from the phone or from another device, `unknown` otherwise (including a locked account).",
             "example": "device_removed"
           },
           "code": {
@@ -4546,6 +5552,47 @@
         "required": [
           "reason",
           "code"
+        ]
+      },
+      "CallEndedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique event identifier",
+            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection that produced this event",
+            "example": "739182640518203"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Integrator reference from the QuickLink that created this connection. Included on connection lifecycle events when supplied."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp",
+            "example": "2026-10-19T14:03:22.000Z"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "call.ended"
+            ],
+            "description": "Event type"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/CallEndedPayload"
+          }
+        },
+        "required": [
+          "id",
+          "connection",
+          "timestamp",
+          "event",
+          "payload"
         ]
       },
       "CallEndedPayload": {
@@ -4590,7 +5637,7 @@
           },
           "reason": {
             "type": "string",
-            "description": "Termination reason: user_hangup | timeout | lost_connection | rejected | capacity | pod_lost | connection_failed | upstream_failed | call_restricted (WhatsApp refused the call because the number is restricted to calling people it has already chatted with).",
+            "description": "Termination reason: user_hangup | timeout | lost_connection | rejected | capacity | pod_lost | connection_failed | upstream_failed | call_restricted (WhatsApp refused the call because the connection is restricted to calling people it has already chatted with).",
             "example": "user_hangup"
           },
           "direction": {
@@ -4607,13 +5654,13 @@
             "description": "Whether the call carried video.",
             "example": false
           },
-          "sessionConnection": {
+          "connectionMethod": {
             "type": "string",
             "enum": [
               "linked_device",
               "cloud_api"
             ],
-            "description": "Connection of the session that carries the call: a linked device or the WhatsApp Business Cloud API.",
+            "description": "Method that carries the call: a linked device or the WhatsApp Business Cloud API.",
             "example": "linked_device"
           }
         },
@@ -4625,13 +5672,300 @@
           "direction",
           "hadVideo"
         ]
-      }
-    },
-    "securitySchemes": {
-      "BearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "description": "Polymorfa team key (pmfa_ prefix), project token (pmfa_pt_ prefix) where supported, or short-lived client token (pmfa_ct_ prefix). Team keys and project tokens may be personal or service-account owned and enforce selected action scopes. Team keys cover the team and its projects; project tokens stay inside one project. Client tokens stay inside their live project and session and enforce their client rules and immutable mint-time action ceiling. Treat all credentials as opaque strings. Never parse them or assume a fixed length; store at least 512 characters. Server keys use issuance-record lookup; short-lived client tokens carry a signed permission ceiling."
+      },
+      "MessageFailedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique event identifier",
+            "example": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection that produced this event",
+            "example": "739182640518203"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Integrator reference from the QuickLink that created this connection. Included on connection lifecycle events when supplied."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp",
+            "example": "2026-10-19T14:03:22.000Z"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "message.failed"
+            ],
+            "description": "Event type"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/MessageFailedPayload"
+          }
+        },
+        "required": [
+          "id",
+          "connection",
+          "timestamp",
+          "event",
+          "payload"
+        ]
+      },
+      "MessageFailedPayload": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdentityRef"
+              },
+              {
+                "description": "Recipient chat the send was attempted to"
+              }
+            ]
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the attempted message (text, image, ...)",
+            "example": "text"
+          },
+          "error": {
+            "type": "string",
+            "enum": [
+              "invalid_recipient",
+              "connection_not_connected",
+              "ack_timeout",
+              "send_failed",
+              "blocked_by_safety"
+            ],
+            "description": "Sanitized failure class",
+            "example": "send_failed"
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable machine-readable code from the API error envelope, present for classified safety refusals and an unknown send outcome",
+            "example": "bansafe_cold_blocked"
+          },
+          "retryAfter": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Whole seconds to wait before retrying a paced send, exhausted allowance, or temporary allowance-accounting pause",
+            "example": 5
+          },
+          "timestamp": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Unix timestamp in seconds when the failure occurred",
+            "example": 1757161200
+          }
+        },
+        "required": [
+          "to",
+          "type",
+          "error",
+          "timestamp"
+        ]
+      },
+      "TriggerTestEventResponse": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "enum": [
+              "message.received",
+              "message.ack",
+              "message.failed",
+              "call.received",
+              "call.missed",
+              "call.ended",
+              "connection.status",
+              "connection.restriction_updated",
+              "template.status"
+            ]
+          },
+          "connection": {
+            "type": "string"
+          },
+          "delivery": {
+            "type": "string",
+            "enum": [
+              "generated",
+              "simulated"
+            ]
+          },
+          "eventId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "test",
+              "runtime"
+            ]
+          }
+        },
+        "required": [
+          "event",
+          "connection",
+          "delivery",
+          "eventId",
+          "source"
+        ]
+      },
+      "TriggerTestEventRequest": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "enum": [
+              "message.received",
+              "message.ack",
+              "message.failed",
+              "call.received",
+              "call.missed",
+              "call.ended",
+              "connection.status",
+              "connection.restriction_updated",
+              "template.status"
+            ],
+            "description": "Fixture name. Each name is the event type it produces."
+          },
+          "overrides": {
+            "$ref": "#/components/schemas/TestEventOverrides"
+          },
+          "fromConnection": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "message.received only. Send a simulated text message from this other connected Test connection in the same project instead of generating an event."
+          }
+        },
+        "required": [
+          "event"
+        ],
+        "additionalProperties": false
+      },
+      "TestEventOverrides": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "from": {
+            "type": "string",
+            "pattern": "^\\+[1-9]\\d{7,14}$"
+          },
+          "pushName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video",
+              "audio",
+              "document",
+              "sticker"
+            ]
+          },
+          "caption": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024
+          },
+          "ackStatus": {
+            "type": "string",
+            "enum": [
+              "delivered",
+              "read",
+              "played",
+              "error"
+            ]
+          },
+          "messageId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,18}$"
+          },
+          "failureReason": {
+            "type": "string",
+            "enum": [
+              "invalid_recipient",
+              "connection_not_connected",
+              "ack_timeout",
+              "send_failed",
+              "blocked_by_safety"
+            ]
+          },
+          "video": {
+            "type": "boolean"
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 86400
+          },
+          "callEndReason": {
+            "type": "string",
+            "enum": [
+              "user_hangup",
+              "timeout",
+              "lost_connection",
+              "rejected",
+              "call_restricted"
+            ]
+          },
+          "restrictionActive": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CONNECTING",
+              "CONNECTED",
+              "DISCONNECTED"
+            ]
+          },
+          "statusReason": {
+            "type": "string",
+            "enum": [
+              "SCAN_QR",
+              "AUTO_RECONNECT",
+              "FAILED",
+              "MANUAL_STOP",
+              "QR_TIMEOUT",
+              "LOGGED_OUT",
+              "TEMPORARY_BAN",
+              "STREAM_ERROR"
+            ]
+          },
+          "templateName": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]{1,512}$"
+          },
+          "templateStatus": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "additionalProperties": false
       }
     },
     "headers": {

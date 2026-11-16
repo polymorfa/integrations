@@ -16,7 +16,7 @@ source that supplies these string fields:
 
 ```json
 {
-  "numberId": "YOUR_NUMBER_ID",
+  "connectionId": "YOUR_CONNECTION_ID",
   "recipient": "YOUR_AUTHORIZED_TEST_RECIPIENT",
   "notificationId": "YOUR_SAVED_NOTIFICATION_ID",
   "notificationStartedAt": "YOUR_SAVED_ISO_TIMESTAMP",

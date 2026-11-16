@@ -10,11 +10,11 @@ class IntegrationError extends Error {
     this.requestId = requestId; this.retryAfter = retryAfter;
   }
 }
-const events = {"messageReceived":{"label":"New Message","description":"Triggers when a message is received.","types":["message.received"]},"messageState":{"label":"Message State Changed","description":"Triggers when a message is sent, acknowledged, failed or updated.","types":["message.sent","message.ack","message.failed","message.update"]},"numberState":{"label":"Number State Changed","description":"Triggers when a Number changes state, connects or logs out.","types":["session.status","session.connected","session.logged_out"]},"callEnded":{"label":"Call Ended","description":"Triggers when a call ends.","types":["call.ended"]}};
+const events = {"messageReceived":{"label":"New Message","description":"Triggers when a message is received.","types":["message.received"]},"messageState":{"label":"Message State Changed","description":"Triggers when a message is sent, acknowledged, failed or updated.","types":["message.sent","message.ack","message.failed","message.update"]},"connectionState":{"label":"Connection State Changed","description":"Triggers when a Connection changes state, connects or logs out.","types":["connection.status","connection.connected","connection.logged_out"]},"callEnded":{"label":"Call Ended","description":"Triggers when a call ends.","types":["call.ended"]}};
 function envelope(body, group) {
-  if (!events[group] || !body || typeof body !== 'object' || Array.isArray(body) || typeof body.id !== 'string' || !body.id || typeof body.session !== 'string' || !body.session || typeof body.timestamp !== 'string' || !Number.isFinite(Date.parse(body.timestamp)) || !events[group].types.includes(body.event) || !body.payload || typeof body.payload !== 'object' || Array.isArray(body.payload)) throw new IntegrationError('invalid_event');
+  if (!events[group] || !body || typeof body !== 'object' || Array.isArray(body) || typeof body.id !== 'string' || !body.id || typeof body.connection !== 'string' || !body.connection || typeof body.timestamp !== 'string' || !Number.isFinite(Date.parse(body.timestamp)) || !events[group].types.includes(body.event) || !body.payload || typeof body.payload !== 'object' || Array.isArray(body.payload)) throw new IntegrationError('invalid_event');
   // Copy the defined envelope only. Never export arbitrary top-level transport fields.
-  return { id: body.id, session: body.session, ...(typeof body.externalId === 'string' ? { externalId: body.externalId } : {}), timestamp: body.timestamp, event: body.event, payload: body.payload };
+  return { id: body.id, connection: body.connection, ...(typeof body.externalId === 'string' ? { externalId: body.externalId } : {}), timestamp: body.timestamp, event: body.event, payload: body.payload };
 }
 return envelope(body, group);
 }

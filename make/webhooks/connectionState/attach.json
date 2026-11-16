@@ -7,7 +7,7 @@
     },
     "response": {
       "temp": {
-        "ownedId": "{{polymorfaFindHook(body; connection; webhook.url; 'numberState'; parameters.subscriptionKey)}}",
+        "ownedId": "{{polymorfaFindHook(body; connection; webhook.url; 'connectionState'; parameters.subscriptionKey)}}",
         "nonce": "{{polymorfaCreationNonce(webhook.url)}}"
       }
     }
@@ -17,21 +17,21 @@
     "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks",
     "method": "POST",
     "headers": {
-      "Idempotency-Key": "{{polymorfaCreateKey(get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'key'); temp.nonce)}}"
+      "Idempotency-Key": "{{polymorfaCreateKey(get(polymorfaHook(connection; 'connectionState'; parameters.subscriptionKey); 'key'); temp.nonce)}}"
     },
     "body": {
       "url": "{{webhook.url}}",
       "eventTypes": [
-        "session.status",
-        "session.connected",
-        "session.logged_out"
+        "connection.status",
+        "connection.connected",
+        "connection.logged_out"
       ],
       "format": "native",
       "enabled": true,
       "headers": [
         {
-          "name": "{{get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'name')}}",
-          "value": "{{get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'value')}}"
+          "name": "{{get(polymorfaHook(connection; 'connectionState'; parameters.subscriptionKey); 'name')}}",
+          "value": "{{get(polymorfaHook(connection; 'connectionState'; parameters.subscriptionKey); 'value')}}"
         }
       ]
     },
@@ -52,10 +52,10 @@
     },
     "response": {
       "data": {
-        "externalHookId": "{{polymorfaLiveHook(body; connection; webhook.url; 'numberState'; parameters.subscriptionKey; ifempty(temp.ownedId; temp.createdId))}}",
+        "externalHookId": "{{polymorfaLiveHook(body; connection; webhook.url; 'connectionState'; parameters.subscriptionKey; ifempty(temp.ownedId; temp.createdId))}}",
         "ownedUrl": "{{webhook.url}}",
-        "receiverName": "{{get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'name')}}",
-        "receiverValue": "{{get(polymorfaHook(connection; 'numberState'; parameters.subscriptionKey); 'value')}}"
+        "receiverName": "{{get(polymorfaHook(connection; 'connectionState'; parameters.subscriptionKey); 'name')}}",
+        "receiverValue": "{{get(polymorfaHook(connection; 'connectionState'; parameters.subscriptionKey); 'value')}}"
       }
     }
   }

@@ -92,7 +92,7 @@ function advanced(p, auth) {
   const path = required(p.path, 'path');
   if (!path.startsWith('/') || path.startsWith('//') || /[%\\?#\s]/.test(path) || path.split('/').some(x => x === '.' || x === '..')) throw new IntegrationError('unsupported_path');
   const method = p.method;
-  const allowed = (method === 'GET' && (path === '/platform/sessions' || /^\/messaging\/projects\/[A-Za-z0-9_-]+\/templates(?:\/[A-Za-z0-9_-]+)?$/.test(path))) ||
+  const allowed = (method === 'GET' && (path === '/platform/connections' || /^\/messaging\/projects\/[A-Za-z0-9_-]+\/templates(?:\/[A-Za-z0-9_-]+)?$/.test(path))) ||
     (method === 'POST' && /^\/messaging\/[A-Za-z0-9_-]+\/messages\/(send|react)$/.test(path));
   if (!allowed) throw new IntegrationError('unsupported_operation');
   const body = method === 'POST' ? object(p.requestBody, 'request_body') : undefined;
@@ -100,12 +100,12 @@ function advanced(p, auth) {
     const keys = path.endsWith('/react') ? ['conversation', 'id', 'reaction'] : ['conversation', 'isForwarded', 'mentions', 'quotedMessage', 'content'];
     if (Object.keys(body).some(k => !keys.includes(k))) throw new IntegrationError('unsupported_request_field');
   }
-  return { method, url: ORIGIN + path, ...(body ? { body } : {}), ...(path === '/platform/sessions' ? { query: { projectId: auth.projectId } } : {}) };
+  return { method, url: ORIGIN + path, ...(body ? { body } : {}), ...(path === '/platform/connections' ? { query: { projectId: auth.projectId } } : {}) };
 }
 function buildRequest(action, p, auth, provider = 'integration', now) {
   let r;
-  if (['sendText', 'sendTemplate', 'sendMedia', 'react'].includes(action)) r = { method: 'POST', url: `${ORIGIN}/messaging/${segment(p.session, 'number')}/messages/${action === 'react' ? 'react' : 'send'}`, body: messageBody(action, p) };
-  else if (action === 'listNumbers') r = { method: 'GET', url: ORIGIN + '/platform/sessions', query: { projectId: auth.projectId } };
+  if (['sendText', 'sendTemplate', 'sendMedia', 'react'].includes(action)) r = { method: 'POST', url: `${ORIGIN}/messaging/${segment(p.connection, 'connection')}/messages/${action === 'react' ? 'react' : 'send'}`, body: messageBody(action, p) };
+  else if (action === 'listConnections') r = { method: 'GET', url: ORIGIN + '/platform/connections', query: { projectId: auth.projectId } };
   else if (action === 'listTemplates') r = { method: 'GET', url: `${ORIGIN}/messaging/projects/${segment(p.projectSlug, 'project_slug')}/templates` };
   else if (action === 'apiRequest') r = advanced(p, auth);
   else throw new IntegrationError('unknown_action');

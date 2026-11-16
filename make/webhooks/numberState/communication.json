@@ -1,9 +1,0 @@
-{
-  "condition": "{{polymorfaReceive(parameters.receiverName; parameters.receiverValue; 'numberState'; headers; body)}}",
-  "respond": {
-    "status": "{{if(polymorfaReceive(parameters.receiverName; parameters.receiverValue; 'numberState'; headers; body); 200; 401)}}",
-    "type": "json",
-    "body": {}
-  },
-  "output": "{{polymorfaEnvelope(body; 'numberState')}}"
-}

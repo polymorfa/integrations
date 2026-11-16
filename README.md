@@ -7,6 +7,12 @@ has been published, approved or listed in a provider's marketplace. Provider
 release evidence is recorded in `releases/`.
 
 The integrations follow the same public API contract as the Polymorfa SDKs.
+Actions select the WhatsApp account with `connection`. Connection lookup uses
+`/platform/connections` and `connections:read`; state triggers receive
+`connection.status`, `connection.connected` and `connection.logged_out` in a
+`connection` envelope. IDs stay strings. Credential connections in each workflow
+platform still hold that platform's authentication settings.
+
 They use each platform's own request and credential APIs. No integration builds
 a separate workflow engine or stores your third-party app connections.
 

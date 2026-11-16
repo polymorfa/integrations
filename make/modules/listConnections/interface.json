@@ -22,8 +22,8 @@
           "type": "text"
         },
         {
-          "name": "sessionId",
-          "label": "sessionId",
+          "name": "connectionId",
+          "label": "connectionId",
           "type": "text"
         },
         {
@@ -132,6 +132,30 @@
               "name": "claimedAt",
               "label": "claimedAt",
               "type": "number"
+            }
+          ]
+        },
+        {
+          "name": "inspector",
+          "label": "inspector",
+          "type": "collection",
+          "spec": [
+            {
+              "name": "claim",
+              "label": "claim",
+              "type": "collection",
+              "spec": [
+                {
+                  "name": "claimed",
+                  "label": "claimed",
+                  "type": "boolean"
+                },
+                {
+                  "name": "claimedAt",
+                  "label": "claimedAt",
+                  "type": "date"
+                }
+              ]
             }
           ]
         }

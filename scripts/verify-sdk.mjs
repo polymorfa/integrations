@@ -14,7 +14,7 @@ for (const kind of ['messaging', 'platform']) {
   ajv.addSchema(openApi3(await response.json()), kind);
 }
 const auth = { apiKey: 'synthetic-project-token', projectId: '11111111-1111-4111-8111-111111111111' };
-const input = { session: '739182640518203', recipientType: 'id', recipient: '9007199254740993123', text: 'Synthetic', idempotencyKey: 'synthetic-write', writeCreatedAt: new Date().toISOString() };
+const input = { connection: '739182640518203', recipientType: 'id', recipient: '9007199254740993123', text: 'Synthetic', idempotencyKey: 'synthetic-write', writeCreatedAt: new Date().toISOString() };
 const cases = [['sendText', {}], ['sendTemplate', { templateName: 'order_ready', language: 'en', components: '[]' }], ['react', { messageId: '739182640518204', reaction: '' }], ...['image', 'video', 'file', 'voice'].flatMap(mediaType => ['url', 'base64'].map(mediaSource => ['sendMedia', { mediaType, mediaSource, media: mediaSource === 'url' ? 'https://example.com/media' : 'AAECAw==' }]))];
 for (const [action, extra] of cases) {
   const request = buildRequest(action, { ...input, ...extra }, auth);

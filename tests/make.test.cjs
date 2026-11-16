@@ -13,8 +13,8 @@ for (const file of readdirSync('make/functions')) {
 }
 const auth = { apiKey: 'synthetic-token', projectId: '11111111-1111-4111-8111-111111111111' };
 test('Make function output matches the shared public request across text, media and advanced calls', () => {
-  const p = { session: '739182640518203', recipientType: 'id', recipient: '739182640518204', text: 'Synthetic', idempotencyKey: 'synthetic-write-1', writeCreatedAt: new Date().toISOString() };
-  for (const [action, extra] of [['sendText', {}], ['sendMedia', { mediaType: 'file', mediaSource: 'base64', media: 'AAECAw==' }], ['sendMedia', { mediaType: 'image', mediaSource: 'url', media: 'https://example.com/synthetic.png' }], ['apiRequest', { method: 'GET', path: '/platform/sessions' }]]) {
+  const p = { connection: '739182640518203', recipientType: 'id', recipient: '739182640518204', text: 'Synthetic', idempotencyKey: 'synthetic-write-1', writeCreatedAt: new Date().toISOString() };
+  for (const [action, extra] of [['sendText', {}], ['sendMedia', { mediaType: 'file', mediaSource: 'base64', media: 'AAECAw==' }], ['sendMedia', { mediaType: 'image', mediaSource: 'url', media: 'https://example.com/synthetic.png' }], ['apiRequest', { method: 'GET', path: '/platform/connections' }]]) {
     const expected = core.buildRequest(action, { ...p, ...extra }, auth, 'make');
     const actual = iml.polymorfaRequest(action, { ...p, ...extra }, auth);
     assert.deepEqual(JSON.parse(JSON.stringify(actual)), expected);
@@ -54,15 +54,15 @@ test('Make activation keys are independent of receiver secrets and change betwee
 });
 
 test('Make verifies live creation receipts and maps the optional public QuickLink reference', () => {
-  const marker = iml.polymorfaHook(auth, 'numberState', 'key');
-  const row = { id: 'owned', projectId: auth.projectId, owner: 'project', url: 'https://example.com/', enabled: true, format: 'native', headers: [{ name: marker.name }], eventTypes: ['session.status', 'session.connected', 'session.logged_out'] };
-  const args = [auth, row.url, 'numberState', 'key', 'owned'];
+  const marker = iml.polymorfaHook(auth, 'connectionState', 'key');
+  const row = { id: 'owned', projectId: auth.projectId, owner: 'project', url: 'https://example.com/', enabled: true, format: 'native', headers: [{ name: marker.name }], eventTypes: ['connection.status', 'connection.connected', 'connection.logged_out'] };
+  const args = [auth, row.url, 'connectionState', 'key', 'owned'];
   assert.equal(iml.polymorfaLiveHook({ data: [row], page: { hasMore: false } }, ...args), 'owned');
   assert.throws(() => iml.polymorfaLiveHook({ data: [], page: { hasMore: false } }, ...args));
   assert.throws(() => iml.polymorfaLiveHook({ data: [{ ...row, id: 'different' }], page: { hasMore: false } }, ...args));
-  const sample = { ...require('../fixtures/events.json').numberState, externalId: 'synthetic-order-reference', transportSecret: 'must-not-escape' };
-  assert.deepEqual(JSON.parse(JSON.stringify(iml.polymorfaEnvelope(sample, 'numberState'))), hooks.envelope(sample, 'numberState'));
-  const attach = JSON.parse(readFileSync('make/webhooks/numberState/attach.json'));
+  const sample = { ...require('../fixtures/events.json').connectionState, externalId: 'synthetic-order-reference', transportSecret: 'must-not-escape' };
+  assert.deepEqual(JSON.parse(JSON.stringify(iml.polymorfaEnvelope(sample, 'connectionState'))), hooks.envelope(sample, 'connectionState'));
+  const attach = JSON.parse(readFileSync('make/webhooks/connectionState/attach.json'));
   assert.ok(attach[0].response.temp.nonce.includes('polymorfaCreationNonce(webhook.url)'));
   assert.ok(attach[1].headers['Idempotency-Key'].includes('temp.nonce'));
   assert.ok(!JSON.stringify(attach).includes('registrationKey'));

@@ -65,7 +65,7 @@ const triggers = Object.fromEntries(Object.entries(events).map(([key, event]) =>
     },
     async performList() { return [require('./shared/samples.json')[key]]; },
     sample: require('./shared/samples.json')[key],
-    outputFields: [{ key: 'id', type: 'string' }, { key: 'session', type: 'string' }, { key: 'externalId', type: 'string' }, { key: 'timestamp', type: 'datetime' }, { key: 'event', type: 'string' }],
+    outputFields: [{ key: 'id', type: 'string' }, { key: 'connection', type: 'string' }, { key: 'externalId', type: 'string' }, { key: 'timestamp', type: 'datetime' }, { key: 'event', type: 'string' }],
   },
 }]));
 module.exports = {
@@ -73,10 +73,10 @@ module.exports = {
   authentication: {
     type: 'custom', connectionLabel: '{{projectId}}',
     fields: [
-      { key: 'apiKey', label: 'Project Token', type: 'password', required: true, helpText: 'A restricted project token. Connection testing requires sessions:read.' },
+      { key: 'apiKey', label: 'Project Token', type: 'password', required: true, helpText: 'A restricted project token. Connection testing requires connections:read.' },
       { key: 'projectId', label: 'Project ID', type: 'string', required: true },
     ],
-    async test(z, bundle) { await withThrottling(z, () => core.execute('listNumbers', {}, bundle.authData, transport(z), 'zapier')); return { projectId: bundle.authData.projectId }; },
+    async test(z, bundle) { await withThrottling(z, () => core.execute('listConnections', {}, bundle.authData, transport(z), 'zapier')); return { projectId: bundle.authData.projectId }; },
   },
   creates, triggers,
 };

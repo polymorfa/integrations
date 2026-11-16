@@ -35,8 +35,8 @@ function writeHeaders(p, now = Date.now()) {
 }
 function buildRequest(action, p, auth, provider = 'integration', now) {
   let r;
-  if (['sendText', 'sendTemplate', 'sendMedia', 'react'].includes(action)) r = { method: 'POST', url: `${ORIGIN}/messaging/${segment(p.session, 'number')}/messages/${action === 'react' ? 'react' : 'send'}`, body: iml.polymorfaBody(action, p) };
-  else if (action === 'listNumbers') r = { method: 'GET', url: ORIGIN + '/platform/sessions', query: { projectId: auth.projectId } };
+  if (['sendText', 'sendTemplate', 'sendMedia', 'react'].includes(action)) r = { method: 'POST', url: `${ORIGIN}/messaging/${segment(p.connection, 'connection')}/messages/${action === 'react' ? 'react' : 'send'}`, body: iml.polymorfaBody(action, p) };
+  else if (action === 'listConnections') r = { method: 'GET', url: ORIGIN + '/platform/connections', query: { projectId: auth.projectId } };
   else if (action === 'listTemplates') r = { method: 'GET', url: `${ORIGIN}/messaging/projects/${segment(p.projectSlug, 'project_slug')}/templates` };
   else if (action === 'apiRequest') r = iml.polymorfaAdvanced(p, auth);
   else throw new IntegrationError('unknown_action');

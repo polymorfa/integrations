@@ -4,11 +4,11 @@ export default {
   key: "polymorfa-sendMedia", name: "Send Media", description: "Sends an image, video, file or voice message.",
   version: '0.1.0', type: 'action',
   props: { polymorfa, ...{
-  "session": {
+  "connection": {
     "type": "string",
-    "label": "Number",
+    "label": "Connection",
     "optional": false,
-    "description": "The exact Number identifier from Polymorfa. Keep it as a string."
+    "description": "The exact Connection identifier from Polymorfa. Keep it as a string."
   },
   "recipientType": {
     "type": "string",
@@ -112,7 +112,7 @@ export default {
   }
 } },
   async run({ $ }) {
-    const input = Object.fromEntries(["session","recipientType","recipient","mediaType","mediaSource","media","mimeType","caption","filename","idempotencyKey","writeCreatedAt"].map(key => [key, this[key]]));
+    const input = Object.fromEntries(["connection","recipientType","recipient","mediaType","mediaSource","media","mimeType","caption","filename","idempotencyKey","writeCreatedAt"].map(key => [key, this[key]]));
     return this.polymorfa.execute($, "sendMedia", input);
   },
 };

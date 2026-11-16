@@ -1,30 +1,32 @@
 {
   "apiVersion": "2026-09-22",
-  "apiSource": "1307601eb7c2eb5e29715d2c1784e38e01e61433",
+  "apiSource": "8354399b827d9127210b9759cd055586e967449e",
   "sdk": {
     "repository": "polymorfa/sdks",
-    "source": "b3bd05843342275f25f304bfe1fc67ca872740ba",
+    "source": "fe83375c38218dc15dc76a5ab7ebf82da94f12cf",
     "publishedPackage": null
   },
   "specs": {
     "messaging": {
       "publicSourcePath": "docs/api-reference/openapi.json",
-      "publicSourceSha256": "4a7b397119f4722b3d2cdcae440a152ca7249ebbc054ed6ebd93c5821f0f28ce",
+      "publicSourceSha256": "9e6a9520b5f64eff9b6b23621ce6e7f7e667b44e45e8a7f56c7e1e94f0d271e8",
       "snapshot": "contracts/openapi.messaging.json",
-      "sha256": "1a92c533626b793e4ed65ef585f7cba37e83a21c38c9bd517c7f1270a38e58c7",
+      "sha256": "5fc4b8f5af37c7694fe307d1d3a5b05a5ad82109a14892cb5b685bbd41bd58d5",
       "sdkSnapshotPath": "contracts/openapi.messaging.json"
     },
     "platform": {
       "publicSourcePath": "docs/api-reference/openapi.management.json",
-      "publicSourceSha256": "f2e7963d5ddb0070c58dfe049c63e40b8bfdd806b7443f3b670b1e888ee4f10f",
+      "publicSourceSha256": "613eb7aa47c29cda851fccec8b05aa07c9e637ed3ff2b57a920e7ea40e4db6a1",
       "snapshot": "contracts/openapi.platform.json",
-      "sha256": "34a7f677d02899a4a392f68468eca0ee5b3b004416337bb33f46301a3dd06984",
+      "sha256": "ec4bcfb5e37c68015c30b086316585b539a7504912487599cc166fa3b2f99b3c",
       "sdkSnapshotPath": "contracts/openapi.platform.json"
     }
   },
-  "audience": "published public exports only",
+  "audience": "Public API source candidate only; nine covered operations projected without private SDK operations.",
   "acceptance": {
     "staging": null,
     "production": null
-  }
+  },
+  "releaseStatus": "source-only",
+  "releaseGate": "Matching staging/production API acceptance and SDK publication are required before integration publication. Fixture and local package checks do not establish provider/editor acceptance."
 }

@@ -9,8 +9,8 @@ const descriptors = fields as Record<string, Field>;
 const properties: INodeProperties[] = [
   { displayName: 'Operation', name: 'operation', type: 'options', noDataExpression: true, default: 'sendText', options: Object.entries(actions).map(([value, a]) => ({ name: a.label, value, description: a.description, action: a.label })) },
   ...Object.entries(descriptors).map(([name, f]): INodeProperties => ({
-    displayName: f.label, name, type: f.options || name === 'session' ? 'options' : 'string', default: f.default ?? '',
-    ...(name === 'session' ? { typeOptions: { loadOptionsMethod: 'getNumbers' } } : {}),
+    displayName: f.label, name, type: f.options || name === 'connection' ? 'options' : 'string', default: f.default ?? '',
+    ...(name === 'connection' ? { typeOptions: { loadOptionsMethod: 'getConnections' } } : {}),
     required: f.required ?? false, description: f.help,
     ...(f.options ? { options: Object.entries({ ...f.options, ...(name === 'mediaSource' ? { binary: 'n8n Binary Input' } : {}) }).map(([value, label]) => ({ name: label, value })) } : {}),
     displayOptions: { show: { operation: Object.entries(actions).filter(([, a]) => (a.fields as readonly string[]).includes(name)).map(([key]) => key) } },
@@ -29,10 +29,10 @@ export class Polymorfa implements INodeType {
     credentials: [{ name: 'polymorfaApi', required: true }], properties,
   };
   methods = { loadOptions: {
-    async getNumbers(this: ILoadOptionsFunctions) {
+    async getConnections(this: ILoadOptionsFunctions) {
       const auth = await this.getCredentials('polymorfaApi');
-      const result = await execute('listNumbers', {}, auth, transport(this), 'n8n');
-      return result.data.map((n: { sessionId: string; name?: string | null }) => ({ name: n.name ? `${n.name} (${n.sessionId})` : n.sessionId, value: n.sessionId }));
+      const result = await execute('listConnections', {}, auth, transport(this), 'n8n');
+      return result.data.map((n: { connectionId: string; name?: string | null }) => ({ name: n.name ? `${n.name} (${n.connectionId})` : n.connectionId, value: n.connectionId }));
     },
   } };
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {

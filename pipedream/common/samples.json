@@ -1,7 +1,7 @@
 {
   "messageReceived": {
     "id": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a71",
-    "session": "739182640518203",
+    "connection": "739182640518203",
     "timestamp": "2026-11-01T12:00:00.000Z",
     "event": "message.received",
     "payload": {
@@ -22,7 +22,7 @@
   },
   "messageState": {
     "id": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a72",
-    "session": "739182640518203",
+    "connection": "739182640518203",
     "timestamp": "2026-11-01T12:00:00.000Z",
     "event": "message.sent",
     "payload": {
@@ -37,18 +37,18 @@
       "timestamp": 1793534400
     }
   },
-  "numberState": {
+  "connectionState": {
     "id": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a73",
-    "session": "739182640518203",
+    "connection": "739182640518203",
     "timestamp": "2026-11-01T12:00:00.000Z",
-    "event": "session.status",
+    "event": "connection.status",
     "payload": {
       "status": "connected"
     }
   },
   "callEnded": {
     "id": "0190f2a4-6c1e-7b9d-9f3a-2e8c4d5b6a74",
-    "session": "739182640518203",
+    "connection": "739182640518203",
     "timestamp": "2026-11-01T12:00:00.000Z",
     "event": "call.ended",
     "payload": {
