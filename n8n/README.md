@@ -44,6 +44,20 @@ Webhook subscriptions are project-wide. Filtering a workflow after receipt does
 not prevent disclosure to n8n. Dedupe by event `id` before downstream effects;
 repeated delivery is possible. Delete/disable the owned webhook before revoking its credential.
 
+Each delivery must carry a valid `X-Webhook-Signature` header, an HMAC-SHA256 of
+the exact raw request body made with the endpoint's signing secret. The trigger
+checks it against the raw bytes before parsing the body, and also checks its
+marker header. A missing, duplicate or invalid signature, a missing raw body or
+a missing stored secret rejects the delivery. The node's signing secret is
+kept in workflow static data and never emitted. Activation returns the secret from the create response, or rotates it
+(zero overlap) when the webhook already exists, so activating a trigger replaces
+any earlier secret for that webhook.
+
+Triggers saved before signature verification have no stored secret and reject
+every delivery. Deactivate and reactivate the workflow to rotate and store a fresh secret.
+Rotating the endpoint's signing secret in the Polymorfa Console also invalidates
+the stored secret and rejects deliveries until the trigger is reactivated.
+
 n8n executes your workflow under its own hosting and retention settings. Choosing
 a Polymorfa EU or Brazil region does not place n8n's processing in that region.
 Test with synthetic data and check the platform's logs before release.

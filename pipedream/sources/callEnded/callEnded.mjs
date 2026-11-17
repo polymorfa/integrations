@@ -8,17 +8,19 @@ export default {
   hooks: {
     async activate() {
       const store = { get: () => this.db.get('pendingCreation'), set: value => this.db.set('pendingCreation', value || null) };
-      const owned = await this.polymorfa.activate(undefined, this.http.endpoint, "callEnded", this.subscriptionKey, store);
+      const { owned, secret } = await this.polymorfa.activate(undefined, this.http.endpoint, "callEnded", this.subscriptionKey, store);
       this.db.set('ownedSubscription', owned);
+      this.db.set('signingSecret', secret);
     },
     async deactivate() {
       const owned = this.db.get('ownedSubscription');
       if (owned) { await this.polymorfa.unsubscribe(undefined, owned); this.db.set('ownedSubscription', null); }
+      this.db.set('signingSecret', null);
       this.db.set('pendingCreation', null);
     },
   },
   async run(event) {
-    if (!this.polymorfa.authenticate("callEnded", this.subscriptionKey, event.headers)) { this.http.respond({ status: 401 }); return; }
+    if (!this.polymorfa.authenticate("callEnded", this.subscriptionKey, event.headers) || !this.polymorfa.verify(this.db.get('signingSecret'), event.bodyRaw, event.headers)) { this.http.respond({ status: 401 }); return; }
     let data;
     try { data = this.polymorfa.envelope(event.body, "callEnded"); } catch { this.http.respond({ status: 400 }); return; }
     this.$emit(data, { id: data.id, summary: data.event, ts: Date.parse(data.timestamp) });

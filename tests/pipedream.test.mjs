@@ -3,6 +3,7 @@ import action from '../pipedream/actions/sendText/sendText.mjs';
 import source from '../pipedream/sources/messageReceived/messageReceived.mjs';
 import hooks from '../shared/hooks.cjs';
 import { readFileSync } from 'node:fs';
+import { createHmac } from 'node:crypto';
 test('Pipedream action passes exact fields to the app request boundary', async () => {
   const input = { session: '739182640518203', recipientType: 'id', recipient: '9007199254740993123', text: 'Synthetic', quotedMessageId: undefined, idempotencyKey: 'write-1', writeCreatedAt: '2026-11-01T12:00:00Z' };
   let call;
@@ -12,11 +13,22 @@ test('Pipedream action passes exact fields to the app request boundary', async (
 test('Pipedream source rejects forgery and emits only the defined envelope with dedupe identity', async () => {
   const auth = { apiKey: 'synthetic-token', projectId: '11111111-1111-4111-8111-111111111111' }; const key = 'source-1';
   const marker = hooks.identity(auth, 'messageReceived', key); const sample = JSON.parse(readFileSync('fixtures/events.json')).messageReceived;
-  const emitted = []; const responses = [];
-  const context = { subscriptionKey: key, polymorfa: { authenticate: (g, k, h) => hooks.authenticate(auth, g, k, h), envelope: hooks.envelope }, http: { respond: value => responses.push(value) }, $emit: (data, metadata) => emitted.push({ data, metadata }) };
-  await source.run.call(context, { headers: {}, body: sample }); assert.equal(responses.at(-1).status, 401); assert.equal(emitted.length, 0);
-  await source.run.call(context, { headers: { [marker.name]: marker.value }, body: sample });
+  const secret = 'synthetic-signing-secret-for-tests'; const bodyRaw = JSON.stringify(sample);
+  const sig = createHmac('sha256', secret).update(bodyRaw).digest('hex');
+  const emitted = []; const responses = []; let stored = secret;
+  const context = { subscriptionKey: key, db: { get: k => k === 'signingSecret' ? stored : undefined }, polymorfa: { authenticate: (g, k, h) => hooks.authenticate(auth, g, k, h), verify: hooks.verify, envelope: hooks.envelope }, http: { respond: value => responses.push(value) }, $emit: (data, metadata) => emitted.push({ data, metadata }) };
+  const signed = { [marker.name]: marker.value, 'x-webhook-signature': sig };
+  const rejected = async event => { const before = emitted.length; await source.run.call(context, event); assert.equal(responses.at(-1).status, 401); assert.equal(emitted.length, before); };
+  await rejected({ headers: {}, body: sample, bodyRaw });
+  await rejected({ headers: { [marker.name]: marker.value }, body: sample, bodyRaw }); // marker alone
+  await rejected({ headers: { 'x-webhook-signature': sig }, body: sample, bodyRaw }); // signature alone
+  await rejected({ headers: signed, body: sample }); // no raw body
+  await rejected({ headers: signed, body: sample, bodyRaw: bodyRaw + ' ' }); // tampered
+  stored = undefined; await rejected({ headers: signed, body: sample, bodyRaw }); // subscribed before verification existed
+  stored = secret;
+  await source.run.call(context, { headers: signed, body: sample, bodyRaw });
   assert.deepEqual(emitted[0].data, sample); assert.equal(emitted[0].metadata.id, sample.id); assert.equal(source.dedupe, 'unique');
+  assert.ok(!JSON.stringify(emitted).includes(secret) && !JSON.stringify(responses).includes(secret));
 });
 
 import app from '../pipedream/polymorfa.app.mjs';
@@ -32,8 +44,9 @@ test('Pipedream source deactivates and reactivates with a fresh creation nonce i
   for (let i = 0; i < 3; i++) {
     await source.hooks.activate.call(context);
     assert.equal(s.rows.length, 1); assert.equal(db.get('ownedSubscription').id, s.rows[0].id); assert.equal(db.get('pendingCreation'), null);
+    assert.equal(db.get('signingSecret'), s.secrets.get(s.rows[0].id)); assert.ok(!JSON.stringify(db.get('ownedSubscription')).includes(db.get('signingSecret')));
     await source.hooks.deactivate.call(context);
-    assert.equal(s.rows.length, 0); assert.equal(db.get('ownedSubscription'), null);
+    assert.equal(s.rows.length, 0); assert.equal(db.get('ownedSubscription'), null); assert.equal(db.get('signingSecret'), null);
   }
   assert.equal(new Set(s.posts().map(r => r.headers['Idempotency-Key'])).size, 3);
 });

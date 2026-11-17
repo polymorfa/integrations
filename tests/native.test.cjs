@@ -2,6 +2,7 @@
 const { test } = require('node:test'); const assert = require('node:assert/strict');
 const { Polymorfa } = require('../n8n/dist/nodes/Polymorfa/Polymorfa.node.js');
 const { PolymorfaTrigger } = require('../n8n/dist/nodes/Polymorfa/PolymorfaTrigger.node.js');
+const { createHmac } = require('node:crypto');
 const zapier = require('../zapier');
 const hooks = require('../shared/hooks.cjs');
 const fake = require('./fake-webhooks.cjs');
@@ -26,13 +27,23 @@ test('compiled n8n native binary input maps bytes through the existing base64 re
 });
 test('compiled n8n trigger rejects unauthenticated input and keeps event identity on valid input', async () => {
   const marker = hooks.identity(auth, 'messageReceived', 'synthetic-trigger');
-  const sample = require('../fixtures/events.json').messageReceived;
-  let incoming = {}; let status;
-  const context = { getCredentials: async () => auth, getNodeParameter: k => k === 'eventGroup' ? 'messageReceived' : 'synthetic-trigger', getHeaderData: () => incoming, getBodyData: () => sample, getResponseObject: () => ({ status(v) { status = v; return this; }, end() {} }), helpers: { returnJsonArray: value => [{ json: value }] } };
+  const sample = require('../fixtures/events.json').messageReceived; const secret = 'synthetic-signing-secret-for-tests';
+  const raw = Buffer.from(JSON.stringify(sample)); const sig = createHmac('sha256', secret).update(raw).digest('hex');
+  let incoming = {}; let status; let rawBody = raw; let stored = secret;
+  const context = { getCredentials: async () => auth, getNodeParameter: k => k === 'eventGroup' ? 'messageReceived' : 'synthetic-trigger', getHeaderData: () => incoming, getBodyData: () => sample, getRequestObject: () => ({ rawBody }), getWorkflowStaticData: () => ({ signingSecret: stored }), getResponseObject: () => ({ status(v) { status = v; return this; }, end() {} }), helpers: { returnJsonArray: value => [{ json: value }] } };
   const trigger = new PolymorfaTrigger();
-  assert.deepEqual(await trigger.webhook.call(context), { noWebhookResponse: true }); assert.equal(status, 401);
-  incoming = { [marker.name]: marker.value };
+  const rejected = async () => { status = undefined; assert.deepEqual(await trigger.webhook.call(context), { noWebhookResponse: true }); assert.equal(status, 401); };
+  await rejected();
+  incoming = { [marker.name]: marker.value }; await rejected(); // marker alone is not enough
+  incoming = { [marker.name]: marker.value, 'x-webhook-signature': sig };
   const valid = await trigger.webhook.call(context); assert.equal(valid.workflowData[0][0].json.id, sample.id);
+  assert.ok(!JSON.stringify(valid).includes(secret));
+  rawBody = Buffer.from(JSON.stringify(sample) + ' '); await rejected(); // tampered body
+  rawBody = undefined; await rejected(); // no raw body
+  rawBody = raw; stored = undefined; await rejected(); // subscription saved before verification existed
+  stored = 'another-synthetic-signing-secret'; await rejected(); // wrong secret
+  stored = secret; incoming = { [marker.name]: marker.value, 'x-webhook-signature': sig.toUpperCase() }; await rejected();
+  incoming = { 'x-webhook-signature': sig }; await rejected(); // signature alone is not enough
 });
 test('Zapier native action returns the real API envelope and never follows redirects', async () => {
   let request;
@@ -44,10 +55,14 @@ test('Zapier native hook uses stable event IDs and synthetic setup samples witho
   const marker = hooks.identity(auth, 'messageReceived', 'synthetic-trigger'); const sample = require('../fixtures/events.json').messageReceived;
   const operation = zapier.triggers.messageReceived.operation;
   let requests = 0; const z = { request: () => { requests++; }, errors: { Error } };
-  const bundle = { authData: auth, inputData: { subscriptionKey: 'synthetic-trigger' }, cleanedRequest: { headers: { [marker.name]: marker.value }, content: sample } };
+  const secret = 'synthetic-signing-secret-for-tests'; const content = JSON.stringify(sample);
+  const headers = { [marker.name]: marker.value, 'x-webhook-signature': createHmac('sha256', secret).update(content).digest('hex') };
+  const bundle = { authData: auth, inputData: { subscriptionKey: 'synthetic-trigger' }, subscribeData: { signingSecret: secret }, rawRequest: { headers, content } };
   assert.deepEqual(await operation.perform(z, bundle), [sample]);
+  // The parsed request alone cannot be verified, so it is refused.
+  await assert.rejects(operation.perform(z, { ...bundle, rawRequest: undefined, cleanedRequest: { headers, content: sample } }));
   assert.equal((await operation.performList(z, bundle))[0].id, sample.id); assert.equal(requests, 0);
-  await assert.rejects(operation.perform(z, { ...bundle, cleanedRequest: { headers: {}, content: sample } }));
+  await assert.rejects(operation.perform(z, { ...bundle, rawRequest: { ...bundle.rawRequest, headers: {} } }));
 });
 
 test('n8n continue-on-fail retains successful write results and continues later items', async () => {
@@ -118,13 +133,28 @@ test('compiled n8n trigger survives test listen, activation, deactivation and re
     const context = n8nHookContext(s, staticData, params);
     if (!(await methods.checkExists.call(context))) await methods.create.call(context);
     assert.equal(staticData.pendingCreation, undefined); assert.equal(s.rows.length, 1); assert.equal(staticData.subscription.id, s.rows[0].id);
-    await methods.delete.call(context); assert.equal(s.rows.length, 0); assert.equal(staticData.subscription, undefined);
+    assert.equal(typeof staticData.signingSecret, 'string'); assert.ok(!JSON.stringify(staticData.subscription).includes(staticData.signingSecret));
+    assert.equal(await methods.checkExists.call(context), true);
+    await methods.delete.call(context); assert.equal(s.rows.length, 0); assert.equal(staticData.subscription, undefined); assert.equal(staticData.signingSecret, undefined);
   };
   await run(); await run();
   params.url = 'https://n8n.example/webhook/abc/webhook';
   await run(); await run();
   assert.equal(s.posts().length, 4); assert.equal(new Set(s.posts().map(r => r.headers['Idempotency-Key'])).size, 4);
   assert.deepEqual(new PolymorfaTrigger().description.properties.map(p => p.name), ['eventGroup', 'subscriptionKey', 'scopeNotice']);
+});
+test('compiled n8n trigger treats an existing hook with no stored secret as missing and rotates on create', async () => {
+  const s = fake.server(); const methods = new PolymorfaTrigger().webhookMethods.default; const first = {};
+  const params = { eventGroup: 'messageReceived', subscriptionKey: 'synthetic-trigger', url: 'https://n8n.example/webhook/abc/webhook' };
+  await methods.create.call(n8nHookContext(s, first, params));
+  const lost = {}; // The saved workflow state predates signature verification.
+  const context = n8nHookContext(s, lost, params);
+  assert.equal(await methods.checkExists.call(context), false);
+  await methods.create.call(context);
+  assert.equal(s.rows.length, 1); assert.equal(s.rotations().length, 1); assert.equal(lost.signingSecret, s.secrets.get(s.rows[0].id));
+  s.rotateMode('reject'); const failed = {};
+  await assert.rejects(methods.create.call(n8nHookContext(s, failed, params)), e => e.code === 'signing_secret_unavailable');
+  assert.equal(failed.signingSecret, undefined); assert.equal(failed.subscription, undefined);
 });
 test('compiled n8n trigger keeps an uncertain activation nonce in node static data for its retry', async () => {
   const s = fake.server(); const staticData = {}; const methods = new PolymorfaTrigger().webhookMethods.default;
@@ -146,21 +176,35 @@ test('Zapier REST hook turns off and on again with a fresh activation each time'
   for (let i = 0; i < 3; i++) {
     const subscribeData = await operation.performSubscribe(z, bundle());
     assert.equal(s.rows.length, 1); assert.equal(subscribeData.id, s.rows[0].id);
-    assert.ok(!JSON.stringify(subscribeData).includes('SYNTHETIC-ONE-TIME-SIGNING-SECRET'));
+    assert.equal(subscribeData.signingSecret, s.secrets.get(s.rows[0].id));
     await operation.performUnsubscribe(z, { ...bundle(), subscribeData }); assert.equal(s.rows.length, 0);
   }
   assert.equal(new Set(s.posts().map(r => r.headers['Idempotency-Key'])).size, 3);
 });
-test('Zapier accepts the documented rawRequest shape with Http- prefixed Camel-Case headers', async () => {
+test('Zapier accepts the documented rawRequest shape with Http- prefixed Camel-Case headers and verifies the raw body', async () => {
   const marker = hooks.identity(auth, 'messageReceived', 'synthetic-trigger'); const sample = require('../fixtures/events.json').messageReceived;
   const operation = zapier.triggers.messageReceived.operation; const z = { errors: { Error } };
+  const secret = 'synthetic-signing-secret-for-tests'; const content = JSON.stringify(sample);
+  const sig = createHmac('sha256', secret).update(content).digest('hex');
   // Zapier docs (Bundle object, bundle.rawRequest): headers other than Content-Length and Content-Type
   // are prefixed with Http- and written in Camel-Case, for example X-Time-GMT becomes Http-X-Time-Gmt.
-  const camel = ('Http-' + marker.name).split('-').map(w => w[0].toUpperCase() + w.slice(1).toLowerCase()).join('-');
-  const rawRequest = { method: 'POST', querystring: '', headers: { 'Content-Type': 'application/json', [camel]: marker.value, 'Http-User-Agent': 'polymorfa-webhooks' }, content: JSON.stringify(sample) };
-  const bundle = { authData: auth, inputData: { subscriptionKey: 'synthetic-trigger' }, rawRequest, cleanedRequest: sample };
+  const camel = name => ('Http-' + name).split('-').map(w => w[0].toUpperCase() + w.slice(1).toLowerCase()).join('-');
+  const headers = { 'Content-Type': 'application/json', [camel(marker.name)]: marker.value, [camel('x-webhook-signature')]: sig, 'Http-User-Agent': 'polymorfa-webhooks' };
+  const rawRequest = { method: 'POST', querystring: '', headers, content };
+  const bundle = { authData: auth, inputData: { subscriptionKey: 'synthetic-trigger' }, rawRequest, cleanedRequest: sample, subscribeData: { signingSecret: secret } };
   assert.deepEqual(await operation.perform(z, bundle), [sample]);
-  await assert.rejects(operation.perform(z, { ...bundle, rawRequest: { ...rawRequest, headers: { 'Content-Type': 'application/json' } } }));
-  await assert.rejects(operation.perform(z, { ...bundle, rawRequest: { ...rawRequest, headers: { [camel]: marker.value, [marker.name]: marker.value } } }), 'one marker header only');
-  await assert.rejects(operation.perform(z, { ...bundle, rawRequest: { ...rawRequest, headers: { [camel]: '0'.repeat(64) } } }));
+  const { 'Http-X-Webhook-Signature': _drop, ...unsigned } = headers;
+  for (const [name, change] of Object.entries({
+    'no marker': { rawRequest: { ...rawRequest, headers: { 'Content-Type': 'application/json' } } },
+    'duplicate marker': { rawRequest: { ...rawRequest, headers: { ...headers, [marker.name]: marker.value } } },
+    'wrong marker': { rawRequest: { ...rawRequest, headers: { ...headers, [camel(marker.name)]: '0'.repeat(64) } } },
+    'marker without signature': { rawRequest: { ...rawRequest, headers: unsigned } },
+    'tampered body': { rawRequest: { ...rawRequest, content: content + ' ' } },
+    'missing raw body': { rawRequest: { ...rawRequest, content: undefined } },
+    'no stored secret': { subscribeData: {} },
+    'no subscribe data': { subscribeData: undefined },
+    'wrong secret': { subscribeData: { signingSecret: 'another-synthetic-signing-secret' } },
+  })) {
+    await assert.rejects(operation.perform(z, { ...bundle, ...change }), e => !JSON.stringify(e.message).includes(secret), name);
+  }
 });

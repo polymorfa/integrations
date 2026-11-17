@@ -45,8 +45,9 @@ const triggers = Object.fromEntries(Object.entries(events).map(([key, event]) =>
       // with its own creation nonce. Its result is stored by Zapier as subscribeData.
       let pending;
       const store = { get: () => pending, set: value => { pending = value || undefined; } };
-      const owned = await withThrottling(z, () => hooks.activate(bundle.authData, bundle.targetUrl, key, bundle.inputData.subscriptionKey, transport(z), 'zapier', store));
-      return { ...owned, url: bundle.targetUrl };
+      const { owned, secret } = await withThrottling(z, () => hooks.activate(bundle.authData, bundle.targetUrl, key, bundle.inputData.subscriptionKey, transport(z), 'zapier', store));
+      // subscribeData is private to Zapier; the signing secret is never emitted by a trigger.
+      return { ...owned, url: bundle.targetUrl, signingSecret: secret };
     },
     async performUnsubscribe(z, bundle) {
       const owned = bundle.subscribeData;
@@ -57,10 +58,12 @@ const triggers = Object.fromEntries(Object.entries(events).map(([key, event]) =>
       // (except Content-Type and Content-Length). Accept that form and the plain name, once.
       const incoming = bundle.rawRequest?.headers || bundle.cleanedRequest?.headers;
       if (!hooks.authenticate(bundle.authData, key, bundle.inputData.subscriptionKey, incoming, ['', 'http-'])) throw new z.errors.Error('Webhook authentication failed.', 'WebhookAuthentication', 401);
-      let body = bundle.cleanedRequest?.content;
-      if (typeof bundle.rawRequest?.content === 'string') {
-        try { body = JSON.parse(bundle.rawRequest.content); } catch { throw new z.errors.Error('Invalid webhook body.', 'InvalidEvent', 400); }
-      }
+      // Verify the exact raw bytes before parsing. A missing secret (subscribed before verification
+      // existed) or a missing raw body fails closed; turn the Zap off and on again to rotate the secret.
+      const raw = bundle.rawRequest?.content;
+      if (typeof raw !== 'string' || !hooks.verify(bundle.subscribeData?.signingSecret, raw, incoming, ['', 'http-'])) throw new z.errors.Error('Webhook authentication failed.', 'WebhookAuthentication', 401);
+      let body;
+      try { body = JSON.parse(raw); } catch { throw new z.errors.Error('Invalid webhook body.', 'InvalidEvent', 400); }
       return [hooks.envelope(body, key)];
     },
     async performList() { return [require('./shared/samples.json')[key]]; },

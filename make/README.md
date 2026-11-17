@@ -56,6 +56,14 @@ template lookup `templates:read`, and hooks `webhooks:read` plus `webhooks:manag
 The universal **Make an API call** module permits only the public allowlist on
 the fixed Polymorfa origin; it cannot call arbitrary hosts or change principals.
 
+Make webhooks do not verify `X-Webhook-Signature`. A dedicated webhook's
+`communication.json` receives only the parsed `headers` and `body`; no raw request
+body is available to IML, and the signature covers the exact raw bytes. Recomputing
+it from re-serialized JSON would give false rejections or false acceptance, so the
+Make trigger stays on its derived marker header only. Treat that marker as shared
+receiver authentication, not as body integrity. The webhook's signing secret is not
+requested or stored. Revisit this if Make exposes the raw body.
+
 Writes require a stable business idempotency key and saved ISO start time. Map
 native files to base64 and MIME type within the 4 MiB decoded connector limit.
 Use string IDs. Deduplicate project-wide events by their stable event ID before

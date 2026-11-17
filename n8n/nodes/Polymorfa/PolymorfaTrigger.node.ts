@@ -1,7 +1,7 @@
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import type { IHookFunctions, IWebhookFunctions, INodeType, INodeTypeDescription, IWebhookResponseData } from 'n8n-workflow';
 import { events } from '../../shared/catalog';
-import { activate, unsubscribe, authenticate, envelope, find, identity } from '../../shared/hooks';
+import { activate, unsubscribe, authenticate, verify, envelope, find, identity } from '../../shared/hooks';
 import { transport } from './transport';
 
 export class PolymorfaTrigger implements INodeType {
@@ -22,16 +22,19 @@ export class PolymorfaTrigger implements INodeType {
       const auth = await this.getCredentials('polymorfaApi');
       const url = this.getNodeWebhookUrl('default')!, group = this.getNodeParameter('eventGroup') as string, subscriptionKey = this.getNodeParameter('subscriptionKey') as string;
       const found = await find(auth, url, group, subscriptionKey, transport(this), 'n8n');
-      if (found) this.getWorkflowStaticData('node').subscription = { id: found.id, url, group, subscriptionKey, markerName: identity(auth, group, subscriptionKey).name };
-      return !!found;
+      const data = this.getWorkflowStaticData('node');
+      // A hook without a stored signing secret (saved before verification existed, or whose activation
+      // failed) is reported missing so n8n calls create, which rotates and stores a fresh secret.
+      if (found && typeof data.signingSecret === 'string') data.subscription = { id: found.id, url, group, subscriptionKey, markerName: identity(auth, group, subscriptionKey).name };
+      return !!found && typeof data.signingSecret === 'string';
     },
     async create(this: IHookFunctions) {
       const auth = await this.getCredentials('polymorfaApi');
       const data = this.getWorkflowStaticData('node');
       // Node static data keeps this activation's creation nonce private to n8n.
       const store = { get: () => data.pendingCreation, set: (value: unknown) => { if (value) data.pendingCreation = value; else delete data.pendingCreation; } };
-      const hook = await activate(auth, this.getNodeWebhookUrl('default')!, this.getNodeParameter('eventGroup') as string, this.getNodeParameter('subscriptionKey') as string, transport(this), 'n8n', store);
-      data.subscription = hook; return true;
+      const { owned: hook, secret } = await activate(auth, this.getNodeWebhookUrl('default')!, this.getNodeParameter('eventGroup') as string, this.getNodeParameter('subscriptionKey') as string, transport(this), 'n8n', store);
+      data.subscription = hook; data.signingSecret = secret; return true;
     },
     async delete(this: IHookFunctions) {
       const data = this.getWorkflowStaticData('node');
@@ -40,6 +43,7 @@ export class PolymorfaTrigger implements INodeType {
         await unsubscribe(await this.getCredentials('polymorfaApi'), owned.id, owned.url, owned.group, owned.subscriptionKey, transport(this), 'n8n', owned.markerName);
         delete data.subscription;
       }
+      delete data.signingSecret;
       delete data.pendingCreation;
       return true;
     },
@@ -47,7 +51,10 @@ export class PolymorfaTrigger implements INodeType {
   async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
     const group = this.getNodeParameter('eventGroup') as string;
     const auth = await this.getCredentials('polymorfaApi');
-    if (!authenticate(auth, group, this.getNodeParameter('subscriptionKey') as string, this.getHeaderData())) {
+    // Verify the exact raw bytes n8n received, before any JSON parsing. No secret or no raw body fails closed.
+    const secret = this.getWorkflowStaticData('node').signingSecret;
+    const headers = this.getHeaderData();
+    if (!authenticate(auth, group, this.getNodeParameter('subscriptionKey') as string, headers) || !verify(secret, this.getRequestObject().rawBody, headers)) {
       this.getResponseObject().status(401).end(); return { noWebhookResponse: true };
     }
     try {
