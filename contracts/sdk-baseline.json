@@ -1,5 +1,5 @@
 {
-  "source": "93352af97f704206d77f3dc2618f5acdd7f34c09",
+  "source": "797815afd4da378d1f1ec2dba1e639386c789a57",
   "note": "Fingerprints of reviewed public SDK fragments. The SDK audience differs from the public API projection; no extra operation is imported. Changes require reconciliation, not automatic repinning.",
   "fragments": {
     "messaging": {
