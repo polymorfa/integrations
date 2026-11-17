@@ -6,8 +6,8 @@ record has been requested and no registry PR has been submitted. The app slug
 
 The requested custom authentication fields are `api_key` (a secret project token)
 and `project_id` (its project UUID). Verify credentials through
-`GET /platform/sessions?projectId=...` with the accepted `Polymorfa-Version`.
-This needs `sessions:read`. Restrict each connection's remaining scopes to its
+`GET /platform/connections?projectId=...` with the accepted `Polymorfa-Version`.
+This needs `connections:read`. Restrict each connection's remaining scopes to its
 actions and hooks. Never use dashboard cookies or client-token impersonation.
 
 Each native action uses `polymorfa.app.mjs` and the provider's Axios helper with
@@ -25,4 +25,4 @@ Examples target Connect action/tool/event use. Do not create recipes around the
 Workflows builder scheduled to retire on March 31, 2027.
 
 Pipedream processing has its own residency and retention. Do not imply that a
-Polymorfa EU/Brazil Number places external component execution in that region.
+Polymorfa EU/Brazil Connection places external component execution in that region.

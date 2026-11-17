@@ -14,7 +14,7 @@ export class PolymorfaTrigger implements INodeType {
     properties: [
       { displayName: 'Event', name: 'eventGroup', type: 'options', default: 'messageReceived', options: Object.entries(events).map(([value, event]) => ({ name: event.label, value, description: event.description })) },
       { displayName: 'Subscription Key', name: 'subscriptionKey', type: 'string', required: true, default: '', description: 'A unique stable label for this trigger. Keep it on reactivation; use a different value for another trigger.' },
-      { displayName: 'Events are project-wide. Filtering after receipt does not limit which Numbers disclose events to n8n.', name: 'scopeNotice', type: 'notice', default: '' },
+      { displayName: 'Events are project-wide. Filtering after receipt does not limit which Connections disclose events to n8n.', name: 'scopeNotice', type: 'notice', default: '' },
     ],
   };
   webhookMethods = { default: {

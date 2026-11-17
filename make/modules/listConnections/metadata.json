@@ -1,0 +1,6 @@
+{
+  "label": "List Connections",
+  "description": "Lists Connections visible to the connected project.",
+  "connection": "project",
+  "type": "action"
+}

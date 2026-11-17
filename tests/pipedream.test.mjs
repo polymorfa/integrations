@@ -4,7 +4,7 @@ import source from '../pipedream/sources/messageReceived/messageReceived.mjs';
 import hooks from '../shared/hooks.cjs';
 import { readFileSync } from 'node:fs';
 test('Pipedream action passes exact fields to the app request boundary', async () => {
-  const input = { session: '739182640518203', recipientType: 'id', recipient: '9007199254740993123', text: 'Synthetic', quotedMessageId: undefined, idempotencyKey: 'write-1', writeCreatedAt: '2026-11-01T12:00:00Z' };
+  const input = { connection: '739182640518203', recipientType: 'id', recipient: '9007199254740993123', text: 'Synthetic', quotedMessageId: undefined, idempotencyKey: 'write-1', writeCreatedAt: '2026-11-01T12:00:00Z' };
   let call;
   const result = await action.run.call({ ...input, polymorfa: { execute: async ($, key, values) => { call = { key, values }; return { data: { id: '739182640518204' } }; } } }, { $: {} });
   assert.deepEqual(call, { key: 'sendText', values: input }); assert.equal(result.data.id, '739182640518204');
@@ -51,4 +51,12 @@ test('Pipedream sources expose no webhook creation key prop', async () => {
     const { default: component } = await import(`../pipedream/sources/${name}/${name}.mjs`);
     assert.deepEqual(Object.keys(component.props).sort(), ['db', 'http', 'polymorfa', 'subscriptionKey']);
   }
+});
+
+test('the native app exposes the Connection prop with no retired account prop', () => {
+  assert.equal(app.propDefinitions.connection.type, 'string');
+  assert.equal(app.propDefinitions.connection.label, 'Connection');
+  assert.equal(app.propDefinitions.session, undefined);
+  assert.equal(action.props.connection.label, 'Connection');
+  assert.equal(action.props.session, undefined);
 });

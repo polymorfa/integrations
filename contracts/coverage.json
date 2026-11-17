@@ -3,7 +3,7 @@
     "sendMessage": {
       "contract": "messaging",
       "method": "POST",
-      "path": "/messaging/{session}/messages/send",
+      "path": "/messaging/{connection}/messages/send",
       "scope": "messages:write",
       "sdkOperation": "sendMessage",
       "purpose": "action"
@@ -11,7 +11,7 @@
     "sendReaction": {
       "contract": "messaging",
       "method": "POST",
-      "path": "/messaging/{session}/messages/react",
+      "path": "/messaging/{connection}/messages/react",
       "scope": "messages:write",
       "sdkOperation": "sendReaction",
       "purpose": "action"
@@ -32,12 +32,12 @@
       "sdkOperation": "getProjectTemplate",
       "purpose": "action"
     },
-    "listPlatformSessions": {
+    "listPlatformConnections": {
       "contract": "platform",
       "method": "GET",
-      "path": "/platform/sessions",
-      "scope": "sessions:read",
-      "sdkOperation": "listPlatformSessions",
+      "path": "/platform/connections",
+      "scope": "connections:read",
+      "sdkOperation": "listPlatformConnections",
       "purpose": "action"
     },
     "listProjectWebhooks": {

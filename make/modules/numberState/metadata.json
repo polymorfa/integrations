@@ -1,6 +1,0 @@
-{
-  "label": "Number State Changed",
-  "description": "Triggers when a Number changes state, connects or logs out.",
-  "type": "instant",
-  "webhook": "numberState"
-}

@@ -60,14 +60,14 @@ test('only the selected public envelope is emitted and event IDs remain stable',
   for (const [group, body] of Object.entries(samples)) {
     const event = hooks.envelope({ ...body, headers: { Authorization: 'must-not-escape' } }, group);
     assert.equal(event.id, body.id); assert.ok(!('headers' in event));
-    assert.throws(() => hooks.envelope({ ...body, event: 'session.qr' }, group));
-    assert.throws(() => hooks.envelope({ ...body, session: 739182640518203 }, group));
+    assert.throws(() => hooks.envelope({ ...body, event: 'connection.qr' }, group));
+    assert.throws(() => hooks.envelope({ ...body, connection: 739182640518203 }, group));
   }
 });
 test('editor samples match their public event schemas', () => {
   const ajv = new Ajv({ strict: false, allErrors: true }); addFormats(ajv);
   ajv.addSchema(require('../scripts/openapi-schema.cjs')(require('../contracts/openapi.messaging.json')), 'messaging');
-  const names = { messageReceived: 'MessageReceivedEvent', messageState: 'MessageSentEvent', numberState: 'SessionStatusEvent', callEnded: 'CallEndedEvent' };
+  const names = { messageReceived: 'MessageReceivedEvent', messageState: 'MessageSentEvent', connectionState: 'ConnectionStatusEvent', callEnded: 'CallEndedEvent' };
   for (const [group, sample] of Object.entries(require('../fixtures/events.json'))) {
     const validate = ajv.compile({ $ref: `messaging#/components/schemas/${names[group]}` });
     assert.ok(validate(sample), `${group}: ${JSON.stringify(validate.errors)}`);
@@ -148,8 +148,10 @@ test('creation keys require an adapter nonce and a pending nonce is bound to its
   await assert.rejects(hooks.subscribe(auth, url, 'messageReceived', key, async () => ({ status: 200, body: { data: [], page: {} } }), 'test'), e => e.code === 'invalid_creation_nonce');
   const s = server(); const store = memory();
   store.set({ nonce: NONCE, url: 'https://other.example/hook', group: 'messageReceived', subscriptionKey: key });
-  await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store);
-  assert.notEqual(s.posts()[0].headers['Idempotency-Key'], hooks.creationKey(hooks.identity(auth, 'messageReceived', key).key, NONCE));
+  const pending = store.peek();
+  await assert.rejects(hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store), e => e.code === 'subscription_requires_reconciliation');
+  assert.deepEqual(store.peek(), pending);
+  assert.equal(s.posts().length, 0);
 });
 
 test('uncertain creation errors keep reconcile guidance even when the server sends an error code', async () => {
@@ -158,10 +160,10 @@ test('uncertain creation errors keep reconcile guidance even when the server sen
 });
 
 test('public QuickLink reference survives the event projection without arbitrary transport data', () => {
-  const sample = require('../fixtures/events.json').numberState;
-  const projected = hooks.envelope({ ...sample, externalId: 'synthetic-order-reference', transportSecret: 'must-not-escape' }, 'numberState');
+  const sample = require('../fixtures/events.json').connectionState;
+  const projected = hooks.envelope({ ...sample, externalId: 'synthetic-order-reference', transportSecret: 'must-not-escape' }, 'connectionState');
   assert.equal(projected.externalId, 'synthetic-order-reference'); assert.ok(!('transportSecret' in projected));
-  assert.ok(!('externalId' in hooks.envelope({ ...sample, externalId: { invalid: true } }, 'numberState')));
+  assert.ok(!('externalId' in hooks.envelope({ ...sample, externalId: { invalid: true } }, 'connectionState')));
 });
 
 test('callback normalization preserves ownership across activation and cleanup', async () => {
@@ -181,4 +183,13 @@ for (const status of [403, 422, 429]) test(`definite subscription rejection ${st
     return { status, headers: { 'retry-after': '17', 'x-request-id': 'safe-request' }, body: { error: { code: 'scope_denied' } } };
   }, 'test', NONCE), e => e.status === status && e.code === 'scope_denied' && e.retryAfter === 17 && e.requestId === 'safe-request');
   assert.equal(reads, 1);
+});
+
+test('current Connection event envelopes reject the retired account envelope without rewriting it', () => {
+  const sample = require('../fixtures/events.json').connectionState;
+  const { connection, ...rest } = sample;
+  const old = { ...rest, session: connection, event: 'session.status' };
+  const before = JSON.stringify(old);
+  assert.throws(() => hooks.envelope(old, 'connectionState'), e => e.code === 'invalid_event');
+  assert.equal(JSON.stringify(old), before);
 });

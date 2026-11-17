@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Rename WhatsApp account inputs, lookups and state triggers to Connections on
+  n8n, Make, Zapier and Pipedream, including recipes and generated interfaces.
+- Use `connection` event envelopes, `connection.*` lifecycle events,
+  `connections:read` and `/platform/connections`. Retired account names have no aliases.
+- Keep opaque IDs, destination phone numbers, write idempotency and owned webhook
+  cleanup unchanged. This source candidate is not provider publication or acceptance.
+
+## Unreleased
+
 - Separate webhook receiver secrets from public marker/idempotency metadata.
 - Remove the Webhook Creation Key field from all triggers. Each activation uses
   its own adapter-generated nonce, so off/on, n8n test listening and Pipedream

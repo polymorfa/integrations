@@ -5,8 +5,8 @@
     "type": "text"
   },
   {
-    "name": "session",
-    "label": "session",
+    "name": "connection",
+    "label": "connection",
     "type": "text"
   },
   {
@@ -87,8 +87,8 @@
         "type": "boolean"
       },
       {
-        "name": "sessionConnection",
-        "label": "sessionConnection",
+        "name": "connectionMethod",
+        "label": "connectionMethod",
         "type": "text"
       }
     ]

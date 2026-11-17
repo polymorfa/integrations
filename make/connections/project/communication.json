@@ -1,5 +1,5 @@
 {
-  "url": "/platform/sessions",
+  "url": "/platform/connections",
   "method": "GET",
   "qs": {
     "projectId": "{{parameters.projectId}}"

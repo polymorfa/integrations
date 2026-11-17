@@ -18,6 +18,17 @@ for (const [kind, pin] of Object.entries(source.specs)) {
     assert.equal(entry.contract, kind); assert.equal(entry.path, path); assert.equal(entry.method, method.toUpperCase());
     operationIds.add(operation.operationId);
   }
+  const verifyReferences = value => {
+    if (Array.isArray(value)) return value.forEach(verifyReferences);
+    if (!value || typeof value !== 'object') return;
+    if (typeof value.$ref === 'string') {
+      const match = /^#\/components\/([^/]+)\/([^/]+)$/.exec(value.$ref);
+      assert.ok(match && spec.components?.[match[1]]?.[match[2]], `Unresolved public reference ${value.$ref}`);
+    }
+    if (Array.isArray(value.security)) for (const requirement of value.security) for (const name of Object.keys(requirement)) assert.ok(spec.components.securitySchemes?.[name], `Unresolved public security scheme ${name}`);
+    Object.values(value).forEach(verifyReferences);
+  };
+  verifyReferences(spec);
   for (const schema of Object.values(spec.components.schemas)) for (const value of schema.properties?.event?.enum || []) eventTypes.add(value);
   assert.ok(!Object.keys(spec.paths).some(p => /functions|admin|console|quicklink|credentials/i.test(p)));
 }

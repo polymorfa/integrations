@@ -1,0 +1,30 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+test('a later invalid public spec cannot partially replace contract snapshots or their manifest', () => {
+  const root = resolve(homedir(), '.polymorfa-agent-work/connections-rename-20261114/integrations/contract-sync-tests');
+  mkdirSync(root, { recursive: true });
+  const work = mkdtempSync(join(root, 'validation-'));
+  const api = join(work, 'api'); mkdirSync(api); mkdirSync(join(work, 'contracts'));
+  const valid = { openapi: '3.0.0', info: { title: 'Synthetic', version: '2026-09-22' }, paths: { '/messages': { post: { operationId: 'sendText', responses: {} } } }, components: { schemas: {} } };
+  writeFileSync(join(api, 'messaging.json'), JSON.stringify(valid));
+  writeFileSync(join(api, 'platform.json'), JSON.stringify({ ...valid, paths: {} }));
+  execFileSync('git', ['init', '-q', api]); execFileSync('git', ['-C', api, 'add', '.']);
+  execFileSync('git', ['-C', api, '-c', 'user.name=Synthetic fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-qm', 'Synthetic source']);
+  const sha = execFileSync('git', ['-C', api, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  const specs = Object.fromEntries(['messaging', 'platform'].map(kind => [kind, { publicSourcePath: `${kind}.json`, snapshot: `contracts/openapi.${kind}.json`, sha256: 'old-snapshot-hash', publicSourceSha256: 'old-source-hash' }]));
+  writeFileSync(join(work, 'contracts/source.json'), JSON.stringify({ apiSource: 'old-source', specs }));
+  writeFileSync(join(work, 'contracts/coverage.json'), JSON.stringify({ operations: { sendText: { contract: 'messaging', path: '/messages', method: 'POST' }, listConnections: { contract: 'platform', path: '/platform/connections', method: 'GET' } } }));
+  for (const kind of ['messaging', 'platform']) writeFileSync(join(work, `contracts/openapi.${kind}.json`), `unchanged-${kind}`);
+  const files = ['source.json', 'openapi.messaging.json', 'openapi.platform.json'];
+  const before = files.map(name => readFileSync(join(work, 'contracts', name), 'utf8'));
+  const script = fileURLToPath(new URL('../scripts/sync-api-contracts.mjs', import.meta.url));
+  const result = spawnSync(process.execPath, [script, '--api-root', api, '--source', sha], { cwd: work, encoding: 'utf8' });
+  assert.notEqual(result.status, 0); assert.match(result.stderr, /Missing covered public operation listConnections/);
+  assert.deepEqual(files.map(name => readFileSync(join(work, 'contracts', name), 'utf8')), before);
+});

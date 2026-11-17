@@ -5,8 +5,8 @@
     "type": "text"
   },
   {
-    "name": "session",
-    "label": "session",
+    "name": "connection",
+    "label": "connection",
     "type": "text"
   },
   {
@@ -129,6 +129,98 @@
         "name": "timestamp",
         "label": "timestamp",
         "type": "number"
+      },
+      {
+        "name": "stickerType",
+        "label": "stickerType",
+        "type": "text"
+      },
+      {
+        "name": "origin",
+        "label": "origin",
+        "type": "text"
+      },
+      {
+        "name": "emojis",
+        "label": "emojis",
+        "type": "array"
+      },
+      {
+        "name": "accessibilityLabel",
+        "label": "accessibilityLabel",
+        "type": "text"
+      },
+      {
+        "name": "stickerPack",
+        "label": "stickerPack",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "id",
+            "label": "id",
+            "type": "text"
+          },
+          {
+            "name": "name",
+            "label": "name",
+            "type": "text"
+          },
+          {
+            "name": "publisher",
+            "label": "publisher",
+            "type": "text"
+          },
+          {
+            "name": "description",
+            "label": "description",
+            "type": "text"
+          },
+          {
+            "name": "trayIconFileName",
+            "label": "trayIconFileName",
+            "type": "text"
+          },
+          {
+            "name": "items",
+            "label": "items",
+            "type": "array",
+            "spec": {
+              "type": "collection",
+              "spec": [
+                {
+                  "name": "fileName",
+                  "label": "fileName",
+                  "type": "text"
+                },
+                {
+                  "name": "stickerType",
+                  "label": "stickerType",
+                  "type": "text"
+                },
+                {
+                  "name": "mimeType",
+                  "label": "mimeType",
+                  "type": "text"
+                },
+                {
+                  "name": "emojis",
+                  "label": "emojis",
+                  "type": "array"
+                },
+                {
+                  "name": "accessibilityLabel",
+                  "label": "accessibilityLabel",
+                  "type": "text"
+                },
+                {
+                  "name": "premium",
+                  "label": "premium",
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        ]
       },
       {
         "name": "width",
@@ -387,53 +479,6 @@
         ]
       },
       {
-        "name": "to",
-        "label": "to",
-        "type": "collection",
-        "spec": [
-          {
-            "name": "id",
-            "label": "id",
-            "type": "text"
-          },
-          {
-            "name": "phoneNumber",
-            "label": "phoneNumber",
-            "type": "text"
-          },
-          {
-            "name": "bsuid",
-            "label": "bsuid",
-            "type": "text"
-          },
-          {
-            "name": "username",
-            "label": "username",
-            "type": "text"
-          },
-          {
-            "name": "parentBsuid",
-            "label": "parentBsuid",
-            "type": "text"
-          }
-        ]
-      },
-      {
-        "name": "error",
-        "label": "error",
-        "type": "text"
-      },
-      {
-        "name": "code",
-        "label": "code",
-        "type": "text"
-      },
-      {
-        "name": "retryAfter",
-        "label": "retryAfter",
-        "type": "number"
-      },
-      {
         "name": "fromMe",
         "label": "fromMe",
         "type": "boolean"
@@ -596,6 +641,53 @@
         "name": "unavailableReason",
         "label": "unavailableReason",
         "type": "text"
+      },
+      {
+        "name": "to",
+        "label": "to",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "id",
+            "label": "id",
+            "type": "text"
+          },
+          {
+            "name": "phoneNumber",
+            "label": "phoneNumber",
+            "type": "text"
+          },
+          {
+            "name": "bsuid",
+            "label": "bsuid",
+            "type": "text"
+          },
+          {
+            "name": "username",
+            "label": "username",
+            "type": "text"
+          },
+          {
+            "name": "parentBsuid",
+            "label": "parentBsuid",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "error",
+        "label": "error",
+        "type": "text"
+      },
+      {
+        "name": "code",
+        "label": "code",
+        "type": "text"
+      },
+      {
+        "name": "retryAfter",
+        "label": "retryAfter",
+        "type": "number"
       }
     ]
   }

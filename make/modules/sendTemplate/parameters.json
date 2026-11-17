@@ -1,10 +1,10 @@
 [
   {
-    "name": "session",
+    "name": "connection",
     "type": "text",
-    "label": "Number",
+    "label": "Connection",
     "required": true,
-    "help": "The exact Number identifier from Polymorfa. Keep it as a string."
+    "help": "The exact Connection identifier from Polymorfa. Keep it as a string."
   },
   {
     "name": "recipientType",
@@ -67,6 +67,6 @@
     "type": "text",
     "label": "Write Started At",
     "required": true,
-    "help": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes older than 23 hours require reconciliation."
+    "help": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes at least 55 minutes old require reconciliation."
   }
 ]
