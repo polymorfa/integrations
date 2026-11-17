@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- n8n, Zapier and Pipedream triggers verify `X-Webhook-Signature` (HMAC-SHA256 of
+  the raw body) in addition to the marker header. Activation stores the signing
+  secret privately, rotating it when the webhook already exists. Subscriptions
+  saved before this change have no secret and reject deliveries; deactivate and
+  reactivate them. Rotating an endpoint's secret in the Console also requires
+  reactivation. Make cannot read the raw body and keeps marker authentication.
+
 - Separate webhook receiver secrets from public marker/idempotency metadata.
 - Remove the Webhook Creation Key field from all triggers. Each activation uses
   its own adapter-generated nonce, so off/on, n8n test listening and Pipedream

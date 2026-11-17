@@ -11,11 +11,11 @@ const NONCE = '11111111-1111-4111-8111-111111111111';
 function memory() { let value; return { get: () => value, set: v => { value = v || undefined; }, peek: () => value }; }
 for (const group of Object.keys(events)) test(`${group}: activation, reactivation, authentication and owned cleanup`, async () => {
   const s = server(); const transport = s.request.bind(s);
-  const first = await hooks.subscribe(auth, url, group, key, transport, 'test', NONCE);
+  const first = (await hooks.subscribe(auth, url, group, key, transport, 'test', NONCE)).owned;
   assert.deepEqual(Object.keys(first).sort(), ['group', 'id', 'markerName', 'subscriptionKey', 'url']);
   assert.ok(!JSON.stringify(first).includes('SYNTHETIC-ONE-TIME-SIGNING-SECRET'));
-  assert.deepEqual(await hooks.subscribe(auth, url, group, key, transport, 'test', NONCE), first);
-  assert.equal(s.calls.filter(r => r.method === 'POST').length, 1);
+  assert.deepEqual((await hooks.subscribe(auth, url, group, key, transport, 'test', NONCE)).owned, first);
+  assert.equal(s.posts().length, 1);
   const marker = hooks.identity(auth, group, key);
   assert.ok(hooks.authenticate(auth, group, key, { [marker.name.toLowerCase()]: marker.value }));
   assert.ok(!hooks.authenticate(auth, group, 'another-trigger', { [marker.name]: marker.value }));
@@ -26,20 +26,20 @@ for (const group of Object.keys(events)) test(`${group}: activation, reactivatio
 });
 test('an ambiguous accepted create is recovered without another create', async () => {
   const s = server(); s.loseNextCreate();
-  const result = await hooks.subscribe(auth, url, 'messageReceived', key, s.request.bind(s), 'test', NONCE);
-  assert.ok(result.id); assert.equal(s.calls.filter(r => r.method === 'POST').length, 1);
+  const result = (await hooks.subscribe(auth, url, 'messageReceived', key, s.request.bind(s), 'test', NONCE)).owned;
+  assert.ok(result.id); assert.equal(s.posts().length, 1);
 });
 test('an operator-disabled hook is preserved instead of silently enabling or duplicating it', async () => {
   const s = server(); const t = s.request.bind(s);
-  await hooks.subscribe(auth, url, 'messageReceived', key, t, 'test', NONCE); s.rows[0].enabled = false;
+  (await hooks.subscribe(auth, url, 'messageReceived', key, t, 'test', NONCE)).owned; s.rows[0].enabled = false;
   await assert.rejects(hooks.subscribe(auth, url, 'messageReceived', key, t, 'test', NONCE), e => e.code === 'subscription_changed_requires_reconciliation');
-  assert.equal(s.calls.filter(r => r.method === 'POST').length, 1);
+  assert.equal(s.posts().length, 1);
 });
 test('a different callback cannot reuse the same active subscription identity', async () => {
   const s = server(); const t = s.request.bind(s);
-  await hooks.subscribe(auth, url, 'messageReceived', key, t, 'test', NONCE);
+  (await hooks.subscribe(auth, url, 'messageReceived', key, t, 'test', NONCE)).owned;
   await assert.rejects(hooks.subscribe(auth, 'https://other.example/hook', 'messageReceived', key, t, 'test', NONCE), e => e.code === 'subscription_key_already_in_use');
-  assert.equal(s.calls.filter(r => r.method === 'POST').length, 1);
+  assert.equal(s.posts().length, 1);
 });
 test('owned lookup follows cursor pages and refuses looping cursors', async () => {
   const marker = hooks.identity(auth, 'messageReceived', key); const calls = [];
@@ -51,7 +51,7 @@ test('owned lookup follows cursor pages and refuses looping cursors', async () =
   await assert.rejects(hooks.find(auth, url, 'messageReceived', key, async () => ({ status: 200, body: { data: [], page: { hasMore: true, nextCursor: 'loop' } } }), 'test'), e => e.code === 'invalid_subscription_pagination');
 });
 test('cleanup refuses another subscription and never falls back to broader credentials', async () => {
-  const s = server(); const t = s.request.bind(s); const owned = await hooks.subscribe(auth, url, 'messageReceived', key, t, 'test', NONCE);
+  const s = server(); const t = s.request.bind(s); const owned = (await hooks.subscribe(auth, url, 'messageReceived', key, t, 'test', NONCE)).owned;
   await assert.rejects(hooks.unsubscribe(auth, owned.id, 'https://another.example/hook', 'messageReceived', key, t, 'test'), e => e.code === 'subscription_ownership_mismatch');
   assert.equal(s.calls.filter(r => r.method === 'DELETE').length, 0);
 });
@@ -82,10 +82,10 @@ test('public marker and create keys do not reveal receiver verifier material', (
 
 test('deactivate then reactivate registers a new webhook with a new creation key', async () => {
   const s = server(); const store = memory();
-  const first = await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store);
+  const first = (await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store)).owned;
   assert.equal(store.peek(), undefined, 'a confirmed activation clears its pending nonce');
   await hooks.unsubscribe(auth, first.id, url, 'messageReceived', key, s.transport, 'test');
-  const second = await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store);
+  const second = (await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store)).owned;
   assert.equal(s.rows.length, 1); assert.equal(s.rows[0].id, second.id); assert.notEqual(second.id, first.id);
   const posts = s.posts(); assert.equal(posts.length, 2);
   assert.notEqual(posts[0].headers['Idempotency-Key'], posts[1].headers['Idempotency-Key']);
@@ -94,9 +94,9 @@ test('deactivate then reactivate registers a new webhook with a new creation key
 
 test('a test callback followed by the production callback activates both in turn', async () => {
   const s = server(); const store = memory();
-  const test = await hooks.activate(auth, 'https://n8n.example/webhook-test/abc/webhook', 'messageReceived', key, s.transport, 'test', store);
+  const test = (await hooks.activate(auth, 'https://n8n.example/webhook-test/abc/webhook', 'messageReceived', key, s.transport, 'test', store)).owned;
   await hooks.unsubscribe(auth, test.id, test.url, 'messageReceived', key, s.transport, 'test');
-  const live = await hooks.activate(auth, 'https://n8n.example/webhook/abc/webhook', 'messageReceived', key, s.transport, 'test', store);
+  const live = (await hooks.activate(auth, 'https://n8n.example/webhook/abc/webhook', 'messageReceived', key, s.transport, 'test', store)).owned;
   assert.equal(s.rows.length, 1); assert.equal(s.rows[0].url, live.url);
 });
 
@@ -108,7 +108,7 @@ test('a lost create response followed by a retry of the same activation yields o
   const pending = store.peek(); assert.ok(pending && pending.nonce, 'the uncertain activation keeps its nonce');
   // The retry runs before the inventory catches up, so it sends the create again with the same key.
   s.hideNewest(1);
-  const owned = await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store);
+  const owned = (await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store)).owned;
   const posts = s.posts();
   assert.equal(posts.length, 2); assert.equal(posts[0].headers['Idempotency-Key'], posts[1].headers['Idempotency-Key']);
   assert.equal(s.rows.length, 1); assert.equal(owned.id, s.rows[0].id); assert.equal(store.peek(), undefined);
@@ -116,7 +116,7 @@ test('a lost create response followed by a retry of the same activation yields o
 
 test('a lost create response is reconciled from the inventory without a second create', async () => {
   const s = server(); const store = memory(); s.loseNextCreate();
-  const owned = await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store);
+  const owned = (await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store)).owned;
   assert.equal(s.posts().length, 1); assert.equal(s.rows.length, 1); assert.equal(owned.id, s.rows[0].id);
 });
 
@@ -130,7 +130,7 @@ test('a replayed receipt for a deleted webhook is refused, then the next activat
   assert.equal(s.rows.length, 0, 'the dead webhook is not reported as live and nothing new was created');
   assert.equal(s.posts()[1].headers['Idempotency-Key'], s.posts()[0].headers['Idempotency-Key']);
   assert.equal(store.peek(), undefined, 'the spent nonce is discarded');
-  const owned = await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store);
+  const owned = (await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store)).owned;
   assert.equal(s.rows.length, 1); assert.equal(owned.id, s.rows[0].id);
   assert.notEqual(s.posts()[2].headers['Idempotency-Key'], s.posts()[0].headers['Idempotency-Key']);
   assert.ok(nonce);
@@ -148,7 +148,7 @@ test('creation keys require an adapter nonce and a pending nonce is bound to its
   await assert.rejects(hooks.subscribe(auth, url, 'messageReceived', key, async () => ({ status: 200, body: { data: [], page: {} } }), 'test'), e => e.code === 'invalid_creation_nonce');
   const s = server(); const store = memory();
   store.set({ nonce: NONCE, url: 'https://other.example/hook', group: 'messageReceived', subscriptionKey: key });
-  await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store);
+  (await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store)).owned;
   assert.notEqual(s.posts()[0].headers['Idempotency-Key'], hooks.creationKey(hooks.identity(auth, 'messageReceived', key).key, NONCE));
 });
 
@@ -166,9 +166,9 @@ test('public QuickLink reference survives the event projection without arbitrary
 
 test('callback normalization preserves ownership across activation and cleanup', async () => {
   const s = server(); const transport = s.request.bind(s);
-  const first = await hooks.subscribe(auth, 'https://EXAMPLE.COM:443', 'messageReceived', key, transport, 'test', NONCE);
+  const first = (await hooks.subscribe(auth, 'https://EXAMPLE.COM:443', 'messageReceived', key, transport, 'test', NONCE)).owned;
   assert.equal(s.rows[0].url, 'https://example.com/');
-  assert.deepEqual(await hooks.subscribe(auth, 'https://example.com/', 'messageReceived', key, transport, 'test', NONCE), first);
+  assert.deepEqual((await hooks.subscribe(auth, 'https://example.com/', 'messageReceived', key, transport, 'test', NONCE)).owned, first);
   await hooks.unsubscribe(auth, first.id, 'https://EXAMPLE.COM:443', 'messageReceived', key, transport, 'test');
   assert.equal(s.rows.length, 0);
   assert.equal(hooks.sameCallback(url + '?key=A', url + '?key=a'), false);

@@ -75,7 +75,9 @@ an authenticated per-subscription header supported by the public subscription
 contract. A stable unique subscription key determines its private verifier.
 Reactivation reuses its owned hook; another callback cannot reuse the key while
 that hook exists. Changing a verifier or connection requires explicit lifecycle
-and rotation testing. The adapters never emit signing secrets or add a relay.
+and rotation testing. The adapters never emit signing secrets or add a relay. n8n, Zapier and Pipedream also verify `X-Webhook-Signature` over the raw body
+with the endpoint's signing secret, which `hooks.activate` returns separately and
+the adapter stores privately; Make cannot read the raw body and keeps the marker.
 
 All delivery channels can repeat events. Use the event ID in downstream dedupe
 storage and a stable business key for effects. Zapier and Pipedream also use that

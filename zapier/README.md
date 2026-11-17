@@ -24,6 +24,24 @@ says those headers, other than Content-Type and Content-Length, arrive with an
 `Http-` prefix in Camel-Case. The receiver accepts that form or the plain name,
 exactly once. Confirm it on a real REST Hook delivery before review.
 
+Each delivery must carry a valid `X-Webhook-Signature` header, an HMAC-SHA256 of
+the exact raw request body made with the endpoint's signing secret. The trigger
+checks it against the raw bytes before parsing the body, and also checks its
+marker header. A missing, duplicate or invalid signature, a missing raw body or
+a missing stored secret rejects the delivery. The REST Hook's signing secret is
+kept in `bundle.subscribeData` and never emitted. Activation returns the secret from the create response, or rotates it
+(zero overlap) when the webhook already exists, so activating a trigger replaces
+any earlier secret for that webhook.
+
+Triggers saved before signature verification have no stored secret and reject
+every delivery. Turn the Zap off and on again to rotate and store a fresh secret.
+Rotating the endpoint's signing secret in the Polymorfa Console also invalidates
+the stored secret and rejects deliveries until the trigger is reactivated.
+
+The signature is checked against `bundle.rawRequest.content`. If Zapier does not
+provide the raw body, or does not pass `subscribeData` to `perform`, every delivery
+is rejected. Confirm both on a real REST Hook delivery before review.
+
 Validate without contacting Zapier's style service:
 
 ```sh
