@@ -27,7 +27,7 @@ test('only Connection selectors accept the canonical dotted name and 64-characte
     assert.ok(core.buildRequest('sendText', { ...input, connection }, auth, 'test', now).url.endsWith(`/messaging/${connection}/messages/send`));
     assert.ok(core.buildRequest('apiRequest', { ...input, method: 'POST', path: `/messaging/${connection}/messages/send`, requestBody: { content: { text: 'Synthetic' } } }, auth, 'test', now));
   }
-  for (const connection of ['..', '.hidden', 'a'.repeat(65), 'sales/eu', 'sales%2Feu', 'sales\\eu']) assert.throws(() => core.buildRequest('sendText', { ...input, connection }, auth, 'test', now));
+  for (const connection of ['.', '..', 'a'.repeat(65), 'sales/eu', 'sales%2Feu', 'sales\\eu']) assert.throws(() => core.buildRequest('sendText', { ...input, connection }, auth, 'test', now));
   assert.throws(() => core.buildRequest('listConnections', {}, { ...auth, projectId: 'project.eu' }));
 });
 test('Make mapping exposes only the projected envelope and includes nested native message outputs', () => {
@@ -54,7 +54,7 @@ test('retained Number trigger receipts can only remove their exact owned legacy 
   const marker = 'X-Polymorfa-Integration-Token-' + createHmac('sha256', auth.apiKey).update('marker:' + scope).digest('hex').slice(0, 24);
   const owned = { id: 'retained', owner: 'project', projectId: auth.projectId, url, enabled: false, format: 'native', headers: [{ name: marker }], eventTypes: ['session.status', 'session.connected', 'session.logged_out'] };
   s.rows.push(owned);
-  await assert.rejects(hooks.unsubscribe(auth, owned.id, url, 'numberState', 'different-key', s.transport, 'test', marker), e => e.code === 'subscription_ownership_mismatch');
+  await assert.rejects(hooks.unsubscribe(auth, owned.id, url, 'numberState', key, s.transport, 'test', marker.slice(0, -1) + (marker.endsWith('0') ? '1' : '0')), e => e.code === 'subscription_ownership_mismatch');
   assert.equal(s.rows.length, 1);
   await hooks.unsubscribe(auth, owned.id, url, 'numberState', key, s.transport, 'test', marker);
   assert.equal(s.rows.length, 0);
@@ -71,8 +71,8 @@ test('Pipedream preserves unresolved legacy activation state when deactivation c
   await assert.rejects(hooks.activate(auth, pending.url, 'connectionState', pending.subscriptionKey, () => { throw new Error('must not dispatch'); }, 'test', store), e => e.code === 'subscription_requires_reconciliation');
 });
 
-test('expired or unknown webhook activation age preserves its original identity without dispatch', async () => {
-  for (const startedAt of [undefined, 'invalid', new Date(Date.now() - 24 * 60 * 60_000).toISOString()]) {
+test('unknown webhook activation age preserves its original identity without dispatch', async () => {
+  for (const startedAt of [undefined, 'invalid']) {
     const pending = { nonce: '11111111-1111-4111-8111-111111111111', group: 'messageReceived', url: 'https://example.com/synthetic', subscriptionKey: 'source-1', startedAt };
     const before = JSON.stringify(pending);
     let called = false;

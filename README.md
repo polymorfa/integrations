@@ -45,7 +45,11 @@ one-hour receipt expires. Preserve the original write key and start time when
 reconciling an uncertain result.
 
 Trigger cleanup may remove an exactly owned pre-rename webhook. It does not
-register or emit retired event names. An unresolved activation keeps its nonce
-and start time; a changed target or expired receipt needs reconciliation before
-another creation. These source changes do not establish provider publication or
-installed-platform acceptance.
+register or emit retired event names. Cleanup checks the saved marker against
+the live project, callback and event filters, including after token rotation.
+An unresolved activation keeps its nonce and start time. After its creation
+receipt expires, activating again only looks for the existing owned webhook.
+If found, it records that webhook without another POST; it can then be
+deactivated normally. Missing, changed or ambiguous inventory stays blocked for
+reconciliation. A changed target never starts another creation. These source
+changes do not establish provider publication or installed-platform acceptance.

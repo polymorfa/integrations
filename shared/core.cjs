@@ -25,7 +25,7 @@ function segment(value, name) {
   return value;
 }
 function connectionSegment(value) {
-  if (typeof value !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(value)) throw new IntegrationError('invalid_connection');
+  if (typeof value !== 'string' || !/^[A-Za-z0-9._-]{1,64}$/.test(value) || value === '.' || value === '..') throw new IntegrationError('invalid_connection');
   return encodeURIComponent(value);
 }
 function object(value, name) {
@@ -96,7 +96,7 @@ function advanced(p, auth) {
   if (!path.startsWith('/') || path.startsWith('//') || /[%\\?#\s]/.test(path) || path.split('/').some(x => x === '.' || x === '..')) throw new IntegrationError('unsupported_path');
   const method = p.method;
   const allowed = (method === 'GET' && (path === '/platform/connections' || /^\/messaging\/projects\/[A-Za-z0-9_-]+\/templates(?:\/[A-Za-z0-9_-]+)?$/.test(path))) ||
-    (method === 'POST' && /^\/messaging\/[A-Za-z0-9][A-Za-z0-9._-]{0,63}\/messages\/(send|react)$/.test(path));
+    (method === 'POST' && /^\/messaging\/[A-Za-z0-9._-]{1,64}\/messages\/(send|react)$/.test(path));
   if (!allowed) throw new IntegrationError('unsupported_operation');
   const body = method === 'POST' ? object(p.requestBody, 'request_body') : undefined;
   if (body) {

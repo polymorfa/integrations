@@ -94,7 +94,16 @@ function creation(url, group, subscriptionKey) {
 async function activate(auth, url, group, subscriptionKey, transport, provider, store) {
   const target = callback(url);
   let pending = await store.get();
-  if (pending && (pending.url !== target || pending.group !== group || pending.subscriptionKey !== subscriptionKey || typeof pending.nonce !== 'string' || !NONCE.test(pending.nonce) || typeof pending.startedAt !== 'string' || !Number.isFinite(Date.parse(pending.startedAt)) || Date.parse(pending.startedAt) > Date.now() + 60_000 || Date.now() - Date.parse(pending.startedAt) >= 23 * 60 * 60 * 1000)) throw new IntegrationError('subscription_requires_reconciliation');
+  if (pending && (pending.url !== target || pending.group !== group || pending.subscriptionKey !== subscriptionKey || typeof pending.nonce !== 'string' || !NONCE.test(pending.nonce) || typeof pending.startedAt !== 'string' || !Number.isFinite(Date.parse(pending.startedAt)) || Date.parse(pending.startedAt) > Date.now() + 60_000)) throw new IntegrationError('subscription_requires_reconciliation');
+  if (pending && Date.now() - Date.parse(pending.startedAt) >= 23 * 60 * 60 * 1000) {
+    // Expiry forbids another create, but a read may prove the original effect.
+    // Missing, changed or ambiguous inventory never clears an uncertain nonce.
+    const existing = await find(auth, target, group, subscriptionKey, transport, provider);
+    if (!existing) throw new IntegrationError('subscription_requires_reconciliation');
+    const owned = { id: existing.id, url: target, group, subscriptionKey, markerName: identity(auth, group, subscriptionKey).name };
+    await store.set(null);
+    return owned;
+  }
   if (!pending) pending = creation(target, group, subscriptionKey);
   // Save before the create so an uncertain retry of this activation sends the same key.
   await store.set(pending);
@@ -115,9 +124,9 @@ async function unsubscribe(auth, id, url, group, subscriptionKey, transport, pro
   if (group === 'numberState') {
     required(subscriptionKey, 'subscription_key');
     if (subscriptionKey.length > 200) throw new IntegrationError('subscription_ownership_mismatch');
-    const scope = JSON.stringify(['polymorfa-webhook-v1', segment(auth.projectId, 'project_id'), group, subscriptionKey]);
-    const expected = 'X-Polymorfa-Integration-Token-' + createHmac('sha256', required(auth.apiKey, 'project_token')).update('marker:' + scope).digest('hex').slice(0, 24);
-    if (recordedMarker !== expected) throw new IntegrationError('subscription_ownership_mismatch');
+    // Like current-group cleanup, ownership comes from the private receipt and
+    // the live project/callback/filter/header checks, even after token rotation.
+    if (typeof recordedMarker !== 'string' || !/^X-Polymorfa-Integration-Token-[a-f0-9]{24}$/i.test(recordedMarker)) throw new IntegrationError('subscription_ownership_mismatch');
     cleanupTypes = ['session.status', 'session.connected', 'session.logged_out'];
   } else if (!events[group]) throw new IntegrationError('invalid_event_group');
   const path = `/platform/projects/${segment(auth.projectId, 'project_id')}/webhooks/${segment(id, 'webhook_id')}`;

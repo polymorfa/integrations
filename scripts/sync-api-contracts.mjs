@@ -50,15 +50,18 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const source = JSON.parse(readFileSync('contracts/source.json'));
   const coverage = JSON.parse(readFileSync('contracts/coverage.json'));
   const events = Object.values(require('../shared/catalog.cjs').events).flatMap(event => event.types);
+  const snapshots = [];
   for (const [kind, pin] of Object.entries(source.specs)) {
     const bytes = execFileSync('git', ['-C', value('--api-root'), 'show', `${sourceSha}:${pin.publicSourcePath}`], { maxBuffer: 32 * 1024 * 1024 });
     const spec = JSON.parse(bytes); const projected = projectContract(spec, kind, coverage, events);
     const snapshot = JSON.stringify(projected, null, 2) + '\n';
-    writeFileSync(pin.snapshot, snapshot);
+    snapshots.push([pin.snapshot, snapshot]);
     pin.publicSourceSha256 = createHash('sha256').update(bytes).digest('hex');
     pin.sha256 = createHash('sha256').update(snapshot).digest('hex');
   }
   source.apiSource = sourceSha;
+  // A validation failure in any spec must leave every existing file untouched.
+  for (const [path, snapshot] of snapshots) writeFileSync(path, snapshot);
   writeFileSync('contracts/source.json', JSON.stringify(source, null, 2) + '\n');
   console.log(`Projected nine covered public operations from ${sourceSha}. SDK binding and release acceptance remain separate.`);
 }

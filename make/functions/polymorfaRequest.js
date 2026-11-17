@@ -21,7 +21,7 @@ function segment(value, name) {
   return value;
 }
 function connectionSegment(value) {
-  if (typeof value !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(value)) throw new IntegrationError('invalid_connection');
+  if (typeof value !== 'string' || !/^[A-Za-z0-9._-]{1,64}$/.test(value) || value === '.' || value === '..') throw new IntegrationError('invalid_connection');
   return encodeURIComponent(value);
 }
 function headers(auth, provider) {
