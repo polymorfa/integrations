@@ -148,8 +148,10 @@ test('creation keys require an adapter nonce and a pending nonce is bound to its
   await assert.rejects(hooks.subscribe(auth, url, 'messageReceived', key, async () => ({ status: 200, body: { data: [], page: {} } }), 'test'), e => e.code === 'invalid_creation_nonce');
   const s = server(); const store = memory();
   store.set({ nonce: NONCE, url: 'https://other.example/hook', group: 'messageReceived', subscriptionKey: key });
-  await hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store);
-  assert.notEqual(s.posts()[0].headers['Idempotency-Key'], hooks.creationKey(hooks.identity(auth, 'messageReceived', key).key, NONCE));
+  const pending = store.peek();
+  await assert.rejects(hooks.activate(auth, url, 'messageReceived', key, s.transport, 'test', store), e => e.code === 'subscription_requires_reconciliation');
+  assert.deepEqual(store.peek(), pending);
+  assert.equal(s.posts().length, 0);
 });
 
 test('uncertain creation errors keep reconcile guidance even when the server sends an error code', async () => {

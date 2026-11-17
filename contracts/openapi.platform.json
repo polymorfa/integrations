@@ -5,6 +5,11 @@
     "version": "1.0.0",
     "description": "Manage your team, projects, connections, and webhooks.\n\nAuthenticate with a team API key or a project token with the permissions required by the method."
   },
+  "servers": [
+    {
+      "url": "https://api.polymorfa.com"
+    }
+  ],
   "paths": {
     "/platform/connections": {
       "get": {
@@ -1195,6 +1200,13 @@
           "operationId",
           "idempotency"
         ]
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Send your team API key or project token as `Authorization: Bearer <token>`. Treat credentials as opaque strings. Never parse them or assume a fixed length; store at least 512 characters. Permissions and ownership come from the live issuance record. Project tokens can access only their own project."
       }
     },
     "responses": {

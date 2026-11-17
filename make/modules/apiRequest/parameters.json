@@ -43,6 +43,6 @@
     "type": "text",
     "label": "Write Started At",
     "required": false,
-    "help": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes older than 23 hours require reconciliation."
+    "help": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes at least 55 minutes old require reconciliation."
   }
 ]

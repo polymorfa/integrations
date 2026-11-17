@@ -27,7 +27,7 @@ const fields = {
   messageId: { label: 'Message ID', required: true },
   reaction: { label: 'Reaction', help: 'An emoji. Leave empty to remove the reaction.' },
   idempotencyKey: { label: 'Idempotency Key', help: 'Required for writes. Map a stable business key unique to this write. Preserve it across retries.' },
-  writeCreatedAt: { label: 'Write Started At', help: 'Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes older than 23 hours require reconciliation.' },
+  writeCreatedAt: { label: 'Write Started At', help: 'Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes at least 55 minutes old require reconciliation.' },
   projectSlug: { label: 'Project Slug', required: true },
   method: { label: 'Method', required: true, options: { GET: 'GET', POST: 'POST' }, default: 'GET' },
   path: { label: 'Path', required: true, help: 'A supported relative public API path, for example /platform/connections. External hosts and credential operations are refused.' },

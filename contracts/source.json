@@ -1,9 +1,9 @@
 {
   "apiVersion": "2026-09-22",
-  "apiSource": "8354399b827d9127210b9759cd055586e967449e",
+  "apiSource": "a7cab53684b989b1ce68882989d31e2277841bdc",
   "sdk": {
     "repository": "polymorfa/sdks",
-    "source": "ef2a629d74e46648cdd613b8126ab63f8e5ee15d",
+    "source": "fea8a591514b18a386d66347b71baff88d8604ba",
     "publishedPackage": null
   },
   "specs": {
@@ -11,14 +11,14 @@
       "publicSourcePath": "docs/api-reference/openapi.json",
       "publicSourceSha256": "9e6a9520b5f64eff9b6b23621ce6e7f7e667b44e45e8a7f56c7e1e94f0d271e8",
       "snapshot": "contracts/openapi.messaging.json",
-      "sha256": "5fc4b8f5af37c7694fe307d1d3a5b05a5ad82109a14892cb5b685bbd41bd58d5",
+      "sha256": "a35f83031cc710168bcb3252bc5c8d8098801792b0e2eea9aa7661c8b704fdbc",
       "sdkSnapshotPath": "contracts/openapi.messaging.json"
     },
     "platform": {
       "publicSourcePath": "docs/api-reference/openapi.management.json",
-      "publicSourceSha256": "613eb7aa47c29cda851fccec8b05aa07c9e637ed3ff2b57a920e7ea40e4db6a1",
+      "publicSourceSha256": "9cc6160102b2c968c9a5b7b47a7cd7376fdf4189ff3be690d0ae279bf3ade7cf",
       "snapshot": "contracts/openapi.platform.json",
-      "sha256": "ec4bcfb5e37c68015c30b086316585b539a7504912487599cc166fa3b2f99b3c",
+      "sha256": "dc06edaae904e0a9e44cb2fcdefaf1954c719983f85061b6881f25d9aa183097",
       "sdkSnapshotPath": "contracts/openapi.platform.json"
     }
   },

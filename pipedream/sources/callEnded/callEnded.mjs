@@ -1,5 +1,6 @@
 // Generated from shared/catalog.cjs.
 import polymorfa from '../../polymorfa.app.mjs';
+import core from '../../common/core.cjs';
 export default {
   key: "polymorfa-callEnded", name: "Call Ended", description: "Triggers when a call ends.",
   version: '0.1.0', type: 'source', dedupe: 'unique',
@@ -12,6 +13,7 @@ export default {
       this.db.set('ownedSubscription', owned);
     },
     async deactivate() {
+      if (this.db.get('pendingCreation')) throw new core.IntegrationError('subscription_requires_reconciliation');
       const owned = this.db.get('ownedSubscription');
       if (owned) { await this.polymorfa.unsubscribe(undefined, owned); this.db.set('ownedSubscription', null); }
       this.db.set('pendingCreation', null);

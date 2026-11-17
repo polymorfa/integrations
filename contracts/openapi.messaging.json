@@ -9,6 +9,16 @@
       "url": "https://docs.polymorfa.com"
     }
   },
+  "servers": [
+    {
+      "url": "https://api.polymorfa.com"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
   "paths": {
     "/messaging/{connection}/messages/send": {
       "post": {
@@ -5966,6 +5976,13 @@
           }
         },
         "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Polymorfa team key (pmfa_ prefix), project token (pmfa_pt_ prefix) where supported, or short-lived client token (pmfa_ct_ prefix). Team keys and project tokens may be personal or service-account owned and enforce selected action scopes. Team keys cover the team and its projects; project tokens stay inside one project. Client tokens stay inside their live project and connection and enforce their client rules and immutable mint-time action ceiling. Treat all credentials as opaque strings. Never parse them or assume a fixed length; store at least 512 characters. Server keys use issuance-record lookup; short-lived client tokens carry a signed permission ceiling."
       }
     },
     "headers": {

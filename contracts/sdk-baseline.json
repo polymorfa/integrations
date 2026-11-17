@@ -1,6 +1,6 @@
 {
-  "source": "ef2a629d74e46648cdd613b8126ab63f8e5ee15d",
-  "note": "Fingerprints of reviewed SDK fragments for this public Connection source candidate. No additional operation or publication is implied.",
+  "source": "fea8a591514b18a386d66347b71baff88d8604ba",
+  "note": "Fingerprints of reviewed public SDK fragments. The SDK audience differs from the public API projection; no extra operation is imported. Changes require reconciliation, not automatic repinning.",
   "fragments": {
     "messaging": {
       "POST /messaging/{connection}/messages/send": "2df7ed3a7ddfe696eee235901701f4992531820135486f34063e736d1c22c928",
@@ -48,16 +48,16 @@
       "GET /platform/projects/{projectId}/webhooks": "a2c9288bb21cf3fdad6b5fb3aa0471d6075805deeca87f9c67a52593ad387c8f",
       "#/components/schemas/ProjectWebhook": "447a7260884850ee6c8c327635710cb4dd19188e019408c3b8d1e353afda2848",
       "#/components/schemas/WebhookRetryPolicy": "a953fbcee54bed638f93e85b00670d4563f4ff8d17b80d456c831e2a7b0dd9f5",
+      "#/components/schemas/WebhookBatching": "d3be6ee4c2b556f31ffa1974ceff744d90df01baca29344e6cb281aeb6b9ff80",
       "#/components/schemas/WebhookHeaderMetadata": "f03e715b0afdde824ab991f4a664cddfaed3586081926e0fca7b5d6c1440a366",
       "#/components/schemas/WebhookSigningSecretMetadata": "0fed4dc6a07f2066215081784225210e7c0025c864fddfdc77eeca232d1b40b5",
-      "#/components/schemas/WebhookBatching": "d3be6ee4c2b556f31ffa1974ceff744d90df01baca29344e6cb281aeb6b9ff80",
       "#/components/schemas/CursorPageMetadata": "a491dc0e4a93fd2ce4925bade45affaf3bcc840f905251a5b9c643f4b64e35da",
       "#/components/responses/NotFound": "7091da86cd9fffdf72d2c07f0f758177d72202a2a1aee8cd1672e983d1db274e",
       "POST /platform/projects/{projectId}/webhooks": "1b9a4bc78ae0f3b985c7bd683375354d25c4bf53e252a6c4e3fb8951d24086b7",
       "#/components/schemas/CreateProjectWebhookInput": "8fc3291ddf5e7c17c231ccd9d40d564fd2c724eb6c0e259be05bd5dc486f8880",
       "#/components/schemas/WebhookRetryPolicyInput": "a953fbcee54bed638f93e85b00670d4563f4ff8d17b80d456c831e2a7b0dd9f5",
-      "#/components/schemas/WebhookHeaderInput": "9439ff800367858e22668035c1e432e1023d52fc39d65cfdc83a17068c989a51",
       "#/components/schemas/WebhookBatchingInput": "29143d6b029716cb24416ad08db6ec11dc0ad865e4dea44530fe0a283dc5bab3",
+      "#/components/schemas/WebhookHeaderInput": "9439ff800367858e22668035c1e432e1023d52fc39d65cfdc83a17068c989a51",
       "#/components/schemas/ProjectWebhookCreationReceipt": "8fa37c1b86463fb4e451e456ac2b4d0afda26c8648407b937ed7ef22dc1d8147",
       "#/components/schemas/IdempotencyReceipt": "20651991bf1da3fa2a4662f6672727d81896a0d3d931f1a30eeb926c8326a1c9",
       "#/components/responses/Conflict": "4ed94d3b833bb541ca39006152425c39e815fb1e374ca3d2a1b080e828ce9601",

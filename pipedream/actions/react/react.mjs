@@ -57,7 +57,7 @@ export default {
     "type": "string",
     "label": "Write Started At",
     "optional": false,
-    "description": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes older than 23 hours require reconciliation."
+    "description": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes at least 55 minutes old require reconciliation."
   }
 } },
   async run({ $ }) {

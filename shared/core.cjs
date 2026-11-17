@@ -3,7 +3,7 @@
 const ORIGIN = 'https://api.polymorfa.com';
 const VERSION = '2026-09-22';
 const MAX_MEDIA_BYTES = 4 * 1024 * 1024;
-const MAX_WRITE_AGE = 23 * 60 * 60 * 1000;
+const MAX_WRITE_AGE = 55 * 60 * 1000;
 class IntegrationError extends Error {
   constructor(code, status = 0, requestId, retryAfter, write = false) {
     // A write that ended in a server error or is still running has an uncertain outcome, whatever its code.
@@ -23,6 +23,10 @@ function segment(value, name) {
   required(value, name);
   if (!/^[A-Za-z0-9_-]{1,256}$/.test(value)) throw new IntegrationError(`invalid_${name}`);
   return value;
+}
+function connectionSegment(value) {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(value)) throw new IntegrationError('invalid_connection');
+  return encodeURIComponent(value);
 }
 function object(value, name) {
   let parsed = value;
@@ -92,7 +96,7 @@ function advanced(p, auth) {
   if (!path.startsWith('/') || path.startsWith('//') || /[%\\?#\s]/.test(path) || path.split('/').some(x => x === '.' || x === '..')) throw new IntegrationError('unsupported_path');
   const method = p.method;
   const allowed = (method === 'GET' && (path === '/platform/connections' || /^\/messaging\/projects\/[A-Za-z0-9_-]+\/templates(?:\/[A-Za-z0-9_-]+)?$/.test(path))) ||
-    (method === 'POST' && /^\/messaging\/[A-Za-z0-9_-]+\/messages\/(send|react)$/.test(path));
+    (method === 'POST' && /^\/messaging\/[A-Za-z0-9][A-Za-z0-9._-]{0,63}\/messages\/(send|react)$/.test(path));
   if (!allowed) throw new IntegrationError('unsupported_operation');
   const body = method === 'POST' ? object(p.requestBody, 'request_body') : undefined;
   if (body) {
@@ -103,7 +107,7 @@ function advanced(p, auth) {
 }
 function buildRequest(action, p, auth, provider = 'integration', now) {
   let r;
-  if (['sendText', 'sendTemplate', 'sendMedia', 'react'].includes(action)) r = { method: 'POST', url: `${ORIGIN}/messaging/${segment(p.connection, 'connection')}/messages/${action === 'react' ? 'react' : 'send'}`, body: messageBody(action, p) };
+  if (['sendText', 'sendTemplate', 'sendMedia', 'react'].includes(action)) r = { method: 'POST', url: `${ORIGIN}/messaging/${connectionSegment(p.connection)}/messages/${action === 'react' ? 'react' : 'send'}`, body: messageBody(action, p) };
   else if (action === 'listConnections') r = { method: 'GET', url: ORIGIN + '/platform/connections', query: { projectId: auth.projectId } };
   else if (action === 'listTemplates') r = { method: 'GET', url: `${ORIGIN}/messaging/projects/${segment(p.projectSlug, 'project_slug')}/templates` };
   else if (action === 'apiRequest') r = advanced(p, auth);
@@ -134,4 +138,4 @@ async function execute(action, p, auth, transport, provider, now) {
   try { response = await transport(request); } catch { throw new IntegrationError(request.method === 'GET' ? 'network_error' : 'outcome_unknown'); }
   return parseResponse({ ...response, method: request.method });
 }
-module.exports = { ORIGIN, VERSION, MAX_MEDIA_BYTES, IntegrationError, required, segment, object, conversation, advanced, headers, writeHeaders, messageBody, buildRequest, parseResponse, execute };
+module.exports = { ORIGIN, VERSION, MAX_MEDIA_BYTES, MAX_WRITE_AGE, IntegrationError, required, segment, connectionSegment, object, conversation, advanced, headers, writeHeaders, messageBody, buildRequest, parseResponse, execute };

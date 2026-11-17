@@ -10,7 +10,7 @@ class IntegrationError extends Error {
     this.requestId = requestId; this.retryAfter = retryAfter;
   }
 }
-const ORIGIN = 'https://api.polymorfa.com', VERSION = '2026-09-22', MAX_WRITE_AGE = 82800000;
+const ORIGIN = 'https://api.polymorfa.com', VERSION = '2026-09-22', MAX_WRITE_AGE = 3300000;
 function required(value, name) {
   if (typeof value !== 'string' || !value.trim()) throw new IntegrationError(`invalid_${name}`);
   return value;
@@ -19,6 +19,10 @@ function segment(value, name) {
   required(value, name);
   if (!/^[A-Za-z0-9_-]{1,256}$/.test(value)) throw new IntegrationError(`invalid_${name}`);
   return value;
+}
+function connectionSegment(value) {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(value)) throw new IntegrationError('invalid_connection');
+  return encodeURIComponent(value);
 }
 function headers(auth, provider) {
   const token = required(auth.apiKey, 'project_token');
@@ -35,7 +39,7 @@ function writeHeaders(p, now = Date.now()) {
 }
 function buildRequest(action, p, auth, provider = 'integration', now) {
   let r;
-  if (['sendText', 'sendTemplate', 'sendMedia', 'react'].includes(action)) r = { method: 'POST', url: `${ORIGIN}/messaging/${segment(p.connection, 'connection')}/messages/${action === 'react' ? 'react' : 'send'}`, body: iml.polymorfaBody(action, p) };
+  if (['sendText', 'sendTemplate', 'sendMedia', 'react'].includes(action)) r = { method: 'POST', url: `${ORIGIN}/messaging/${connectionSegment(p.connection)}/messages/${action === 'react' ? 'react' : 'send'}`, body: iml.polymorfaBody(action, p) };
   else if (action === 'listConnections') r = { method: 'GET', url: ORIGIN + '/platform/connections', query: { projectId: auth.projectId } };
   else if (action === 'listTemplates') r = { method: 'GET', url: `${ORIGIN}/messaging/projects/${segment(p.projectSlug, 'project_slug')}/templates` };
   else if (action === 'apiRequest') r = iml.polymorfaAdvanced(p, auth);

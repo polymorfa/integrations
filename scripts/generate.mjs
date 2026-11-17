@@ -25,16 +25,20 @@ for (const target of ['n8n/shared', 'zapier/shared', 'pipedream/common']) {
 }
 for (const name of ['LICENSE', 'NOTICE.md']) emit(`n8n/${name}`, readFileSync(name, 'utf8'));
 const specs = Object.fromEntries(['messaging', 'platform'].map(k => [k, JSON.parse(readFileSync(`contracts/openapi.${k}.json`))]));
-function interfaceFields(schema, spec, depth = 0) {
-  if (!schema || depth > 4) return [];
-  if (schema.$ref) return interfaceFields(spec.components.schemas[schema.$ref.split('/').at(-1)], spec, depth + 1);
+function interfaceFields(schema, spec, ancestors = new Set()) {
+  if (!schema) return [];
+  if (schema.$ref) {
+    if (ancestors.has(schema.$ref)) return [];
+    return interfaceFields(spec.components.schemas[schema.$ref.split('/').at(-1)], spec, new Set([...ancestors, schema.$ref]));
+  }
   const fields = { ...schema.properties };
-  for (const variant of [...(schema.allOf || []), ...(schema.oneOf || []), ...(schema.anyOf || [])]) for (const item of interfaceFields(variant, spec, depth + 1)) if (!fields[item.name]) fields[item.name] = { __interface: item };
+  for (const variant of [...(schema.allOf || []), ...(schema.oneOf || []), ...(schema.anyOf || [])]) for (const item of interfaceFields(variant, spec, ancestors)) if (!fields[item.name]) fields[item.name] = { __interface: item };
   return Object.entries(fields).map(([name, s]) => {
     if (s.__interface) return s.__interface;
     const resolved = s.$ref ? spec.components.schemas[s.$ref.split('/').at(-1)] : s;
+    if (!resolved) throw new Error(`Missing interface schema: ${s.$ref}`);
     const type = resolved.type === 'array' ? 'array' : resolved.type === 'boolean' ? 'boolean' : ['number', 'integer'].includes(resolved.type) ? 'number' : resolved.type === 'object' || resolved.properties || resolved.oneOf || resolved.anyOf || resolved.allOf ? 'collection' : resolved.format === 'date-time' ? 'date' : 'text';
-    const children = type === 'array' ? interfaceFields(resolved.items, spec, depth + 1) : type === 'collection' ? interfaceFields(resolved, spec, depth + 1) : [];
+    const children = type === 'array' ? interfaceFields(resolved.items, spec, ancestors) : type === 'collection' ? interfaceFields(s, spec, ancestors) : [];
     return { name, label: name, type, ...(children.length ? { spec: type === 'array' ? { type: 'collection', spec: children } : children } : {}) };
   });
 }
@@ -47,7 +51,7 @@ for (const [key, action] of Object.entries(actions)) {
   }
   emit(`pipedream/actions/${key}/${key}.mjs`, `// Generated from shared/catalog.cjs.\nimport polymorfa from '../../polymorfa.app.mjs';\nexport default {\n  key: ${JSON.stringify('polymorfa-' + key)}, name: ${JSON.stringify(action.label)}, description: ${JSON.stringify(action.description)},\n  version: '0.1.0', type: 'action',\n  props: { polymorfa, ...${JSON.stringify(props, null, 2)} },\n  async run({ $ }) {\n    const input = Object.fromEntries(${JSON.stringify(action.fields)}.map(key => [key, this[key]]));\n    return this.polymorfa.execute($, ${JSON.stringify(key)}, input);\n  },\n};\n`);
 }
-for (const [key, event] of Object.entries(events)) emit(`pipedream/sources/${key}/${key}.mjs`, `// Generated from shared/catalog.cjs.\nimport polymorfa from '../../polymorfa.app.mjs';\nexport default {\n  key: ${JSON.stringify('polymorfa-' + key)}, name: ${JSON.stringify(event.label)}, description: ${JSON.stringify(event.description)},\n  version: '0.1.0', type: 'source', dedupe: 'unique',\n  props: { polymorfa, db: '$.service.db', http: { type: '$.interface.http', customResponse: true },\n    subscriptionKey: { type: 'string', label: 'Subscription Key', description: 'Unique stable label for this source. Events are project-wide.' } },\n  hooks: {\n    async activate() {\n      const store = { get: () => this.db.get('pendingCreation'), set: value => this.db.set('pendingCreation', value || null) };\n      const owned = await this.polymorfa.activate(undefined, this.http.endpoint, ${JSON.stringify(key)}, this.subscriptionKey, store);\n      this.db.set('ownedSubscription', owned);\n    },\n    async deactivate() {\n      const owned = this.db.get('ownedSubscription');\n      if (owned) { await this.polymorfa.unsubscribe(undefined, owned); this.db.set('ownedSubscription', null); }\n      this.db.set('pendingCreation', null);\n    },\n  },\n  async run(event) {\n    if (!this.polymorfa.authenticate(${JSON.stringify(key)}, this.subscriptionKey, event.headers)) { this.http.respond({ status: 401 }); return; }\n    let data;\n    try { data = this.polymorfa.envelope(event.body, ${JSON.stringify(key)}); } catch { this.http.respond({ status: 400 }); return; }\n    this.$emit(data, { id: data.id, summary: data.event, ts: Date.parse(data.timestamp) });\n    this.http.respond({ status: 200 });\n  },\n};\n`);
+for (const [key, event] of Object.entries(events)) emit(`pipedream/sources/${key}/${key}.mjs`, `// Generated from shared/catalog.cjs.\nimport polymorfa from '../../polymorfa.app.mjs';\nimport core from '../../common/core.cjs';\nexport default {\n  key: ${JSON.stringify('polymorfa-' + key)}, name: ${JSON.stringify(event.label)}, description: ${JSON.stringify(event.description)},\n  version: '0.1.0', type: 'source', dedupe: 'unique',\n  props: { polymorfa, db: '$.service.db', http: { type: '$.interface.http', customResponse: true },\n    subscriptionKey: { type: 'string', label: 'Subscription Key', description: 'Unique stable label for this source. Events are project-wide.' } },\n  hooks: {\n    async activate() {\n      const store = { get: () => this.db.get('pendingCreation'), set: value => this.db.set('pendingCreation', value || null) };\n      const owned = await this.polymorfa.activate(undefined, this.http.endpoint, ${JSON.stringify(key)}, this.subscriptionKey, store);\n      this.db.set('ownedSubscription', owned);\n    },\n    async deactivate() {\n      if (this.db.get('pendingCreation')) throw new core.IntegrationError('subscription_requires_reconciliation');\n      const owned = this.db.get('ownedSubscription');\n      if (owned) { await this.polymorfa.unsubscribe(undefined, owned); this.db.set('ownedSubscription', null); }\n      this.db.set('pendingCreation', null);\n    },\n  },\n  async run(event) {\n    if (!this.polymorfa.authenticate(${JSON.stringify(key)}, this.subscriptionKey, event.headers)) { this.http.respond({ status: 401 }); return; }\n    let data;\n    try { data = this.polymorfa.envelope(event.body, ${JSON.stringify(key)}); } catch { this.http.respond({ status: 400 }); return; }\n    this.$emit(data, { id: data.id, summary: data.event, ts: Date.parse(data.timestamp) });\n    this.http.respond({ status: 200 });\n  },\n};\n`);
 
 // Make custom IML functions reuse the exact shared request/response behavior.
 // Every function fits Make's 5,000-character limit. They require provider enablement.
@@ -60,7 +64,7 @@ function imlFunction(name, args, definitions, statement) {
 }
 imlFunction('polymorfaBody', 'action, p', `${errorClass}\nconst MAX_MEDIA_BYTES = ${core.MAX_MEDIA_BYTES};\n${core.required}\n${core.conversation || ''}\n${core.messageBody}`, 'return messageBody(action, p);');
 imlFunction('polymorfaAdvanced', 'p, auth', `${errorClass}\n${core.required}\n${core.object || ''}\nconst ORIGIN = '${core.ORIGIN}';\n${core.advanced || ''}`, 'return advanced(p, auth);');
-imlFunction('polymorfaRequest', 'action, p, auth', `${errorClass}\nconst ORIGIN = '${core.ORIGIN}', VERSION = '${core.VERSION}', MAX_WRITE_AGE = ${23 * 60 * 60 * 1000};\n${core.required}\n${core.segment}\n${core.headers}\n${core.writeHeaders}\n${core.buildRequest.toString().replace('messageBody(action, p)', 'iml.polymorfaBody(action, p)').replace('advanced(p, auth)', 'iml.polymorfaAdvanced(p, auth)')}`, "return buildRequest(action, p, auth, 'make');");
+imlFunction('polymorfaRequest', 'action, p, auth', `${errorClass}\nconst ORIGIN = '${core.ORIGIN}', VERSION = '${core.VERSION}', MAX_WRITE_AGE = ${core.MAX_WRITE_AGE};\n${core.required}\n${core.segment}\n${core.connectionSegment}\n${core.headers}\n${core.writeHeaders}\n${core.buildRequest.toString().replace('messageBody(action, p)', 'iml.polymorfaBody(action, p)').replace('advanced(p, auth)', 'iml.polymorfaAdvanced(p, auth)')}`, "return buildRequest(action, p, auth, 'make');");
 imlFunction('polymorfaResult', 'status, headers, body, method', `${errorClass}\n${safeCode}\n${core.parseResponse}`, 'return parseResponse({ status, headers, body, method });');
 imlFunction('polymorfaSegment', 'value', `${errorClass}\n${core.required}\n${core.segment}`, "return segment(value, 'resource_id');");
 imlFunction('polymorfaHook', 'auth, group, subscriptionKey', `${errorClass}\n${core.required}\n${core.segment}\nconst events = ${JSON.stringify(events)};`, `if (!events[group]) throw new IntegrationError('invalid_event_group');\nrequired(subscriptionKey, 'subscription_key');\nif (subscriptionKey.length > 200) throw new IntegrationError('invalid_subscription_key');\nconst scope = JSON.stringify(['polymorfa-webhook-v1', segment(auth.projectId, 'project_id'), group, subscriptionKey]);\nconst derive = label => iml.sha256(label + ':' + scope, 'hex', auth.apiKey);\nreturn { name: 'X-Polymorfa-Integration-Token-' + derive('marker').slice(0, 24), value: derive('receiver'), key: derive('create') };`);
@@ -97,7 +101,7 @@ for (const [key, action] of Object.entries(actions)) {
 }
 for (const [key, e] of Object.entries(events)) {
   emit(`make/modules/${key}/metadata.json`, { label: e.label, description: e.description, type: 'instant', webhook: key });
-  const schemas = Object.values(specs.messaging.components.schemas).filter(s => s.properties?.event?.enum?.some(type => e.types.includes(type)));
+  const schemas = Object.values(specs.messaging.components.schemas).filter(s => s.properties?.event?.enum?.some(type => e.types.includes(type))).map(s => ({ ...s, properties: Object.fromEntries(Object.entries(s.properties).filter(([name]) => ['id', 'connection', 'externalId', 'timestamp', 'event', 'payload'].includes(name))) }));
   const merge = (a, b) => {
     const result = [...a];
     for (const item of b) {

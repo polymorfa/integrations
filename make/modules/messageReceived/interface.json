@@ -37,7 +37,19 @@
       {
         "name": "whatsapp_ids",
         "label": "whatsapp_ids",
-        "type": "collection"
+        "type": "collection",
+        "spec": [
+          {
+            "name": "linked_devices",
+            "label": "linked_devices",
+            "type": "text"
+          },
+          {
+            "name": "official_api",
+            "label": "official_api",
+            "type": "text"
+          }
+        ]
       },
       {
         "name": "whatsapp_id",
@@ -77,7 +89,34 @@
           {
             "name": "sender",
             "label": "sender",
-            "type": "collection"
+            "type": "collection",
+            "spec": [
+              {
+                "name": "id",
+                "label": "id",
+                "type": "text"
+              },
+              {
+                "name": "phoneNumber",
+                "label": "phoneNumber",
+                "type": "text"
+              },
+              {
+                "name": "bsuid",
+                "label": "bsuid",
+                "type": "text"
+              },
+              {
+                "name": "username",
+                "label": "username",
+                "type": "text"
+              },
+              {
+                "name": "parentBsuid",
+                "label": "parentBsuid",
+                "type": "text"
+              }
+            ]
           }
         ]
       },
@@ -228,7 +267,22 @@
       {
         "name": "pollOptions",
         "label": "pollOptions",
-        "type": "array"
+        "type": "array",
+        "spec": {
+          "type": "collection",
+          "spec": [
+            {
+              "name": "name",
+              "label": "name",
+              "type": "text"
+            },
+            {
+              "name": "hash",
+              "label": "hash",
+              "type": "text"
+            }
+          ]
+        }
       },
       {
         "name": "unavailable",
@@ -293,7 +347,42 @@
           {
             "name": "items",
             "label": "items",
-            "type": "array"
+            "type": "array",
+            "spec": {
+              "type": "collection",
+              "spec": [
+                {
+                  "name": "fileName",
+                  "label": "fileName",
+                  "type": "text"
+                },
+                {
+                  "name": "stickerType",
+                  "label": "stickerType",
+                  "type": "text"
+                },
+                {
+                  "name": "mimeType",
+                  "label": "mimeType",
+                  "type": "text"
+                },
+                {
+                  "name": "emojis",
+                  "label": "emojis",
+                  "type": "array"
+                },
+                {
+                  "name": "accessibilityLabel",
+                  "label": "accessibilityLabel",
+                  "type": "text"
+                },
+                {
+                  "name": "premium",
+                  "label": "premium",
+                  "type": "number"
+                }
+              ]
+            }
           }
         ]
       },
@@ -377,7 +466,29 @@
           {
             "name": "thumbnail",
             "label": "thumbnail",
-            "type": "collection"
+            "type": "collection",
+            "spec": [
+              {
+                "name": "contentType",
+                "label": "contentType",
+                "type": "text"
+              },
+              {
+                "name": "data",
+                "label": "data",
+                "type": "text"
+              },
+              {
+                "name": "width",
+                "label": "width",
+                "type": "number"
+              },
+              {
+                "name": "height",
+                "label": "height",
+                "type": "number"
+              }
+            ]
           }
         ]
       },
@@ -431,7 +542,32 @@
           {
             "name": "items",
             "label": "items",
-            "type": "array"
+            "type": "array",
+            "spec": {
+              "type": "collection",
+              "spec": [
+                {
+                  "name": "productRetailerId",
+                  "label": "productRetailerId",
+                  "type": "text"
+                },
+                {
+                  "name": "quantity",
+                  "label": "quantity",
+                  "type": "number"
+                },
+                {
+                  "name": "itemPrice",
+                  "label": "itemPrice",
+                  "type": "number"
+                },
+                {
+                  "name": "currency",
+                  "label": "currency",
+                  "type": "text"
+                }
+              ]
+            }
           }
         ]
       },
@@ -463,117 +599,5 @@
         ]
       }
     ]
-  },
-  {
-    "name": "delivery",
-    "label": "delivery",
-    "type": "text"
-  },
-  {
-    "name": "eventId",
-    "label": "eventId",
-    "type": "text"
-  },
-  {
-    "name": "source",
-    "label": "source",
-    "type": "text"
-  },
-  {
-    "name": "overrides",
-    "label": "overrides",
-    "type": "collection",
-    "spec": [
-      {
-        "name": "text",
-        "label": "text",
-        "type": "text"
-      },
-      {
-        "name": "from",
-        "label": "from",
-        "type": "text"
-      },
-      {
-        "name": "pushName",
-        "label": "pushName",
-        "type": "text"
-      },
-      {
-        "name": "mediaType",
-        "label": "mediaType",
-        "type": "text"
-      },
-      {
-        "name": "caption",
-        "label": "caption",
-        "type": "text"
-      },
-      {
-        "name": "ackStatus",
-        "label": "ackStatus",
-        "type": "text"
-      },
-      {
-        "name": "messageId",
-        "label": "messageId",
-        "type": "text"
-      },
-      {
-        "name": "failureReason",
-        "label": "failureReason",
-        "type": "text"
-      },
-      {
-        "name": "video",
-        "label": "video",
-        "type": "boolean"
-      },
-      {
-        "name": "durationSeconds",
-        "label": "durationSeconds",
-        "type": "number"
-      },
-      {
-        "name": "callEndReason",
-        "label": "callEndReason",
-        "type": "text"
-      },
-      {
-        "name": "restrictionActive",
-        "label": "restrictionActive",
-        "type": "boolean"
-      },
-      {
-        "name": "status",
-        "label": "status",
-        "type": "text"
-      },
-      {
-        "name": "statusReason",
-        "label": "statusReason",
-        "type": "text"
-      },
-      {
-        "name": "templateName",
-        "label": "templateName",
-        "type": "text"
-      },
-      {
-        "name": "templateStatus",
-        "label": "templateStatus",
-        "type": "text"
-      },
-      {
-        "name": "reason",
-        "label": "reason",
-        "type": "text"
-      }
-    ]
-  },
-  {
-    "name": "fromConnection",
-    "label": "fromConnection",
-    "type": "text"
   }
 ]

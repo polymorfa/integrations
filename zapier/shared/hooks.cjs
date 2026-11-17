@@ -25,10 +25,10 @@ function creationKey(markerKey, nonce) {
   if (typeof nonce !== 'string' || !NONCE.test(nonce)) throw new IntegrationError('invalid_creation_nonce');
   return 'integration-create-' + createHmac('sha256', markerKey).update(nonce).digest('hex');
 }
-function owns(hook, auth, url, group, subscriptionKey, recordedMarker) {
+function owns(hook, auth, url, group, subscriptionKey, recordedMarker, cleanupTypes) {
   const marker = (recordedMarker || identity(auth, group, subscriptionKey).name).toLowerCase();
-  const types = events[group].types;
-  return hook && hook.owner === 'project' && hook.projectId === auth.projectId && sameCallback(hook.url, url) && hook.format === 'native' && hook.enabled === true &&
+  const types = cleanupTypes || events[group]?.types;
+  return types && hook && hook.owner === 'project' && hook.projectId === auth.projectId && sameCallback(hook.url, url) && hook.format === 'native' && hook.enabled === true &&
     Array.isArray(hook.headers) && hook.headers.some(h => h.name.toLowerCase() === marker) && Array.isArray(hook.eventTypes) &&
     hook.eventTypes.length === types.length && types.every(t => hook.eventTypes.includes(t));
 }
@@ -89,15 +89,14 @@ async function subscribe(auth, url, group, subscriptionKey, transport, provider,
   throw new IntegrationError('subscription_receipt_requires_reconciliation');
 }
 function creation(url, group, subscriptionKey) {
-  return { nonce: randomUUID(), url: callback(url), group, subscriptionKey };
+  return { nonce: randomUUID(), url: callback(url), group, subscriptionKey, startedAt: new Date().toISOString() };
 }
 // Store: provider-private { get(), set(value) } for this trigger's pending creation.
 async function activate(auth, url, group, subscriptionKey, transport, provider, store) {
   const target = callback(url);
   let pending = await store.get();
-  if (!pending || pending.url !== target || pending.group !== group || pending.subscriptionKey !== subscriptionKey || typeof pending.nonce !== 'string' || !NONCE.test(pending.nonce)) {
-    pending = creation(target, group, subscriptionKey);
-  }
+  if (pending && (pending.url !== target || pending.group !== group || pending.subscriptionKey !== subscriptionKey || typeof pending.nonce !== 'string' || !NONCE.test(pending.nonce) || typeof pending.startedAt !== 'string' || !Number.isFinite(Date.parse(pending.startedAt)) || Date.parse(pending.startedAt) > Date.now() + 60_000 || Date.now() - Date.parse(pending.startedAt) >= 23 * 60 * 60 * 1000)) throw new IntegrationError('subscription_requires_reconciliation');
+  if (!pending) pending = creation(target, group, subscriptionKey);
   // Save before the create so an uncertain retry of this activation sends the same key.
   await store.set(pending);
   let owned;
@@ -111,12 +110,23 @@ async function activate(auth, url, group, subscriptionKey, transport, provider, 
   return owned;
 }
 async function unsubscribe(auth, id, url, group, subscriptionKey, transport, provider, recordedMarker) {
+  // Cleanup only: the accepted pre-rename trigger stored this exact group and
+  // filter set. It never enters registration, authentication or event emission.
+  let cleanupTypes;
+  if (group === 'numberState') {
+    required(subscriptionKey, 'subscription_key');
+    if (subscriptionKey.length > 200) throw new IntegrationError('subscription_ownership_mismatch');
+    const scope = JSON.stringify(['polymorfa-webhook-v1', segment(auth.projectId, 'project_id'), group, subscriptionKey]);
+    const expected = 'X-Polymorfa-Integration-Token-' + createHmac('sha256', required(auth.apiKey, 'project_token')).update('marker:' + scope).digest('hex').slice(0, 24);
+    if (recordedMarker !== expected) throw new IntegrationError('subscription_ownership_mismatch');
+    cleanupTypes = ['session.status', 'session.connected', 'session.logged_out'];
+  } else if (!events[group]) throw new IntegrationError('invalid_event_group');
   const path = `/platform/projects/${segment(auth.projectId, 'project_id')}/webhooks/${segment(id, 'webhook_id')}`;
   let hook;
   try { hook = (await call(auth, transport, provider, 'GET', path)).data; }
   catch (error) { if (error.status === 404) return; throw error; }
   // Disabled hooks remain owned and may be deleted; all other ownership checks still apply.
-  if (!owns({ ...hook, enabled: true }, auth, url, group, subscriptionKey, recordedMarker)) throw new IntegrationError('subscription_ownership_mismatch');
+  if (!owns({ ...hook, enabled: true }, auth, url, group, subscriptionKey, recordedMarker, cleanupTypes)) throw new IntegrationError('subscription_ownership_mismatch');
   await call(auth, transport, provider, 'DELETE', path, undefined, `integration-delete-${id}`);
 }
 function authenticate(auth, group, subscriptionKey, incomingHeaders, prefixes = ['']) {

@@ -37,3 +37,15 @@ record the remaining native acceptance and publication work.
 
 License: MIT. Newly authored connector code only; no archived Titan adapter code
 is included.
+
+
+Connection names use the public 1-to-64-character selector format, including
+names such as `sales.eu`. Messaging retries stop at 55 minutes, before the API's
+one-hour receipt expires. Preserve the original write key and start time when
+reconciling an uncertain result.
+
+Trigger cleanup may remove an exactly owned pre-rename webhook. It does not
+register or emit retired event names. An unresolved activation keeps its nonce
+and start time; a changed target or expired receipt needs reconciliation before
+another creation. These source changes do not establish provider publication or
+installed-platform acceptance.
