@@ -89,6 +89,24 @@ test('Make detach reads the recorded webhook by ID and deletes it only when owne
   }
 });
 
+test('Make detaches exact retained state subscriptions without registering or emitting retired events', () => {
+  const marker = 'X-Polymorfa-Integration-Token-' + 'a'.repeat(24);
+  const row = { id: 'retained', owner: 'project', projectId: auth.projectId, url: 'https://example.com/', enabled: false,
+    format: 'native', headers: [{ name: marker }], eventTypes: ['session.status', 'session.connected', 'session.logged_out'] };
+  for (const group of ['numberState', 'connectionState']) {
+    const detach = value => iml.polymorfaDetachHook(200, { data: value }, row.id, auth.projectId, row.url, marker, group);
+    assert.equal(detach(row), true);
+    for (const changed of [{ id: 'other' }, { projectId: 'other' }, { owner: 'team' }, { url: 'https://elsewhere.example/' },
+      { format: 'cloud' }, { headers: [{ name: 'X-Other' }] }, { eventTypes: ['session.connected'] },
+      { eventTypes: ['session.status', 'connection.connected', 'session.logged_out'] }]) assert.throws(() => detach({ ...row, ...changed }), /ownership mismatch/);
+    assert.throws(() => iml.polymorfaDetachHook(200, { data: row }, row.id, auth.projectId, row.url, '', group), /ownership mismatch/);
+  }
+  assert.throws(() => iml.polymorfaHook(auth, 'numberState', 'retained'), e => e.code === 'invalid_event_group');
+  assert.throws(() => iml.polymorfaFindHook({ data: [row], page: { hasMore: false } }, auth, row.url, 'numberState', 'retained'), e => e.code === 'invalid_event_group');
+  const event = { ...require('../fixtures/events.json').connectionState, event: 'session.connected' };
+  assert.equal(iml.polymorfaReceive(marker, 'synthetic-secret', 'connectionState', { [marker]: 'synthetic-secret' }, event), false);
+});
+
 test('Make hook lookup matches shared find over the same inventories, including unusual URLs', async () => {
   const marker = hooks.identity(auth, 'messageReceived', 'key');
   const own = { id: 'owned', owner: 'project', projectId: auth.projectId, url: 'https://example.com/', enabled: true, format: 'native', headers: [{ name: marker.name }], eventTypes: ['message.received'] };
