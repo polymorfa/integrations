@@ -33,3 +33,24 @@ test('inbound handoff trigger parameters satisfy the node description and activa
   await methods.create.call(context);
   assert.equal(s.rows.length, 1); assert.equal(staticData.subscription.subscriptionKey, params.subscriptionKey);
 });
+
+test('the imported order recipe uses supported action fields and sends its stable Connection selector', async () => {
+  const { Polymorfa } = require('../n8n/dist/nodes/Polymorfa/Polymorfa.node.js');
+  const send = recipe.nodes.find(n => n.type === 'n8n-nodes-polymorfa.polymorfa');
+  const description = new Polymorfa().description;
+  const names = description.properties.map(p => p.name);
+  for (const name of Object.keys(send.parameters)) assert.ok(names.includes(name), `unknown action parameter ${name}`);
+  const order = { connectionId: 'stable-session-id', notificationId: 'saved-order-1', notificationStartedAt: new Date().toISOString(), recipient: '+14155550123', notificationText: 'Synthetic order update' };
+  const validate = recipe.nodes.find(n => n.id === 'validate-order');
+  const [validated] = vm.runInNewContext(`(function () { ${validate.parameters.jsCode} })()`, { $input: { all: () => [{ json: order }] } });
+  const evaluate = value => typeof value === 'string' && value.startsWith('={{') ? vm.runInNewContext(value.slice(3, -2), { $json: validated.json }) : value;
+  const params = Object.fromEntries(Object.entries(send.parameters).map(([k, v]) => [k, evaluate(v)]));
+  const calls = [];
+  const context = { getCredentials: async () => fake.auth, getInputData: () => [validated], getNodeParameter: (k, i, fallback) => params[k] ?? fallback, getNode: () => ({ name: send.name }), helpers: { httpRequest: async request => { calls.push(request); return { statusCode: 200, body: { success: true, data: { id: '739182640518204' } }, headers: {} }; } } };
+  await new Polymorfa().execute.call(context);
+  assert.equal(calls.length, 1);
+  assert.equal(new URL(calls[0].url).pathname, '/messaging/stable-session-id/messages/send');
+  assert.equal(calls[0].headers['Idempotency-Key'], params.idempotencyKey);
+  assert.deepEqual(calls[0].body.conversation, { phoneNumber: order.recipient });
+  assert.equal(params.writeCreatedAt, order.notificationStartedAt);
+});

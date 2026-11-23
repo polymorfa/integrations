@@ -1,8 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Polymorfa automation platform",
-    "version": "2026-09-22"
+    "title": "Polymorfa Platform API",
+    "version": "1.0.0",
+    "description": "Manage your team, projects, connections, and webhooks.\n\nAuthenticate with a team API key or a project token with the permissions required by the method."
   },
   "servers": [
     {
@@ -10,20 +11,20 @@
     }
   ],
   "paths": {
-    "/platform/sessions": {
+    "/platform/connections": {
       "get": {
-        "operationId": "listPlatformSessions",
+        "operationId": "listPlatformConnections",
         "tags": [
-          "sessions"
+          "connections"
         ],
-        "summary": "List sessions",
-        "description": "Lists sessions in the authenticated team or selected project, including disconnected sessions and their latest status reason. A Test key returns only test numbers in its project, or an empty list when there are none. Other project tokens return all sessions in their own project.\n\nRequires `sessions:read`. Project tokens only access resources in their own project.",
+        "summary": "List connections",
+        "description": "Lists connections in the authenticated team or selected project, including disconnected connections and their latest status reason. A Test key returns only test connections in its project, or an empty list when there are none. Other project tokens return all connections in their own project.\n\nRequires `connections:read`. Project tokens only access resources in their own project.",
         "x-audience": "public",
         "x-polymorfa-resource-boundary": "project",
         "x-excluded-from-public": false,
-        "x-required-scope": "sessions:read",
+        "x-required-scope": "connections:read",
         "x-merged-endpoints": [
-          "listSessionsByOrganization"
+          "listConnectionsByTeam"
         ],
         "security": [
           {
@@ -73,7 +74,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/PlatformSession"
+                        "$ref": "#/components/schemas/PlatformConnection"
                       }
                     }
                   },
@@ -325,6 +326,9 @@
           },
           "409": {
             "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/IdempotencyKeyReused"
           }
         }
       }
@@ -522,6 +526,9 @@
           },
           "409": {
             "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/IdempotencyKeyReused"
           }
         }
       }
@@ -529,7 +536,7 @@
   },
   "components": {
     "schemas": {
-      "PlatformSession": {
+      "PlatformConnection": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -544,8 +551,8 @@
           "projectId": {
             "$ref": "#/components/schemas/ProjectId"
           },
-          "sessionId": {
-            "$ref": "#/components/schemas/SessionIdentifier"
+          "connectionId": {
+            "$ref": "#/components/schemas/ConnectionIdentifier"
           },
           "name": {
             "type": "string",
@@ -578,12 +585,12 @@
           },
           "status": {
             "type": "string",
-            "description": "Latest runtime connection status."
+            "description": "Latest runtime method status."
           },
           "statusReason": {
             "type": "string",
             "nullable": true,
-            "description": "Machine-readable reason for the latest connection status, when available."
+            "description": "Machine-readable reason for the latest method status, when available."
           },
           "messageCount": {
             "type": "integer",
@@ -672,13 +679,25 @@
                 ]
               }
             ]
+          },
+          "inspector": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "claim": {
+                "$ref": "#/components/schemas/InspectorClaimState"
+              }
+            },
+            "required": [
+              "claim"
+            ]
           }
         },
         "required": [
           "_id",
           "_creationTime",
           "projectId",
-          "sessionId",
+          "connectionId",
           "name",
           "phone",
           "platform",
@@ -691,7 +710,8 @@
           "lastActiveAt",
           "paidUntil",
           "customer",
-          "claim"
+          "claim",
+          "inspector"
         ]
       },
       "ProjectId": {
@@ -699,11 +719,31 @@
         "format": "uuid",
         "description": "Project UUID. Optional where an operation can infer or search team scope; required where the operation creates a project-owned resource."
       },
-      "SessionIdentifier": {
+      "ConnectionIdentifier": {
         "type": "string",
         "minLength": 1,
         "maxLength": 64,
-        "description": "Database session UUID or stable session slug."
+        "description": "Database connection UUID or stable connection slug."
+      },
+      "InspectorClaimState": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Whether a team member has claimed this Connection in Inspector. The claimant's identity is not included.",
+        "properties": {
+          "claimed": {
+            "type": "boolean"
+          },
+          "claimedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the current claim was made. Null when unclaimed."
+          }
+        },
+        "required": [
+          "claimed",
+          "claimedAt"
+        ]
       },
       "ErrorEnvelope": {
         "type": "object",
@@ -756,7 +796,7 @@
               "request_log_url": {
                 "type": "string",
                 "format": "uri",
-                "description": "Console page that shows this request. Returned only to organization and project credentials whose request was logged."
+                "description": "Console page that shows this request. Returned only to team and project credentials whose request was logged."
               }
             }
           },
@@ -783,7 +823,7 @@
             "type": "string",
             "format": "uuid"
           },
-          "organizationId": {
+          "teamId": {
             "type": "string",
             "format": "uuid"
           },
@@ -830,7 +870,7 @@
             "type": "integer",
             "minimum": 7,
             "maximum": 13,
-            "description": "First day without the phone on which this endpoint receives session.phone_offline."
+            "description": "First day without the phone on which this endpoint receives connection.phone_offline."
           },
           "headers": {
             "type": "array",
@@ -853,7 +893,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "teamId",
           "owner",
           "projectId",
           "url",
@@ -994,7 +1034,7 @@
             "minimum": 7,
             "maximum": 13,
             "default": 10,
-            "description": "First day without the phone on which this endpoint receives session.phone_offline. WhatsApp signs the linked device out on day 14. On PATCH, omission preserves the stored value. To stop the warning, remove session.phone_offline from eventTypes."
+            "description": "First day without the phone on which this endpoint receives connection.phone_offline. WhatsApp signs the linked device out on day 14. On PATCH, omission preserves the stored value. To stop the warning, remove connection.phone_offline from eventTypes."
           },
           "headers": {
             "type": "array",
@@ -1315,6 +1355,43 @@
               "type": "string"
             },
             "description": "API version applied to this response."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "IdempotencyKeyReused": {
+        "description": "The Idempotency-Key was already used for a different request (`idempotency_conflict`).",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Stable request correlation identifier."
+          },
+          "X-Trace-Id": {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{32}$"
+            },
+            "description": "W3C trace ID of this request. Your `traceparent` trace ID when you sent a valid one."
+          },
+          "Polymorfa-Version": {
+            "schema": {
+              "type": "string"
+            },
+            "description": "API version applied to this response."
+          },
+          "Link": {
+            "description": "Documentation for this Idempotency-Key error (`rel=\"describedby\"`).",
+            "schema": {
+              "type": "string"
+            }
           }
         },
         "content": {

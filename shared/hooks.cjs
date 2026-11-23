@@ -24,10 +24,10 @@ function creationKey(markerKey, nonce) {
   if (typeof nonce !== 'string' || !NONCE.test(nonce)) throw new IntegrationError('invalid_creation_nonce');
   return 'integration-create-' + createHmac('sha256', markerKey).update(nonce).digest('hex');
 }
-function owns(hook, auth, url, group, subscriptionKey, recordedMarker) {
+function owns(hook, auth, url, group, subscriptionKey, recordedMarker, cleanupTypes) {
   const marker = (recordedMarker || identity(auth, group, subscriptionKey).name).toLowerCase();
-  const types = events[group].types;
-  return hook && hook.owner === 'project' && hook.projectId === auth.projectId && sameCallback(hook.url, url) && hook.format === 'native' && hook.enabled === true &&
+  const types = cleanupTypes || events[group]?.types;
+  return types && hook && hook.owner === 'project' && hook.projectId === auth.projectId && sameCallback(hook.url, url) && hook.format === 'native' && hook.enabled === true &&
     Array.isArray(hook.headers) && hook.headers.some(h => h.name.toLowerCase() === marker) && Array.isArray(hook.eventTypes) &&
     hook.eventTypes.length === types.length && types.every(t => hook.eventTypes.includes(t));
 }
@@ -88,15 +88,23 @@ async function subscribe(auth, url, group, subscriptionKey, transport, provider,
   throw new IntegrationError('subscription_receipt_requires_reconciliation');
 }
 function creation(url, group, subscriptionKey) {
-  return { nonce: randomUUID(), url: callback(url), group, subscriptionKey };
+  return { nonce: randomUUID(), url: callback(url), group, subscriptionKey, startedAt: new Date().toISOString() };
 }
 // Store: provider-private { get(), set(value) } for this trigger's pending creation.
 async function activate(auth, url, group, subscriptionKey, transport, provider, store) {
   const target = callback(url);
   let pending = await store.get();
-  if (!pending || pending.url !== target || pending.group !== group || pending.subscriptionKey !== subscriptionKey || typeof pending.nonce !== 'string' || !NONCE.test(pending.nonce)) {
-    pending = creation(target, group, subscriptionKey);
+  if (pending && (pending.url !== target || pending.group !== group || pending.subscriptionKey !== subscriptionKey || typeof pending.nonce !== 'string' || !NONCE.test(pending.nonce) || typeof pending.startedAt !== 'string' || !Number.isFinite(Date.parse(pending.startedAt)) || Date.parse(pending.startedAt) > Date.now() + 60_000)) throw new IntegrationError('subscription_requires_reconciliation');
+  if (pending && Date.now() - Date.parse(pending.startedAt) >= 23 * 60 * 60 * 1000) {
+    // Expiry forbids another create, but a read may prove the original effect.
+    // Missing, changed or ambiguous inventory never clears an uncertain nonce.
+    const existing = await find(auth, target, group, subscriptionKey, transport, provider);
+    if (!existing) throw new IntegrationError('subscription_requires_reconciliation');
+    const owned = { id: existing.id, url: target, group, subscriptionKey, markerName: identity(auth, group, subscriptionKey).name };
+    await store.set(null);
+    return owned;
   }
+  if (!pending) pending = creation(target, group, subscriptionKey);
   // Save before the create so an uncertain retry of this activation sends the same key.
   await store.set(pending);
   let owned;
@@ -110,12 +118,23 @@ async function activate(auth, url, group, subscriptionKey, transport, provider, 
   return owned;
 }
 async function unsubscribe(auth, id, url, group, subscriptionKey, transport, provider, recordedMarker) {
+  // Cleanup only: the accepted pre-rename trigger stored this exact group and
+  // filter set. It never enters registration, authentication or event emission.
+  let cleanupTypes;
+  if (group === 'numberState') {
+    required(subscriptionKey, 'subscription_key');
+    if (subscriptionKey.length > 200) throw new IntegrationError('subscription_ownership_mismatch');
+    // Like current-group cleanup, ownership comes from the private receipt and
+    // the live project/callback/filter/header checks, even after token rotation.
+    if (typeof recordedMarker !== 'string' || !/^X-Polymorfa-Integration-Token-[a-f0-9]{24}$/i.test(recordedMarker)) throw new IntegrationError('subscription_ownership_mismatch');
+    cleanupTypes = ['session.status', 'session.connected', 'session.logged_out'];
+  } else if (!events[group]) throw new IntegrationError('invalid_event_group');
   const path = `/platform/projects/${segment(auth.projectId, 'project_id')}/webhooks/${segment(id, 'webhook_id')}`;
   let hook;
   try { hook = (await call(auth, transport, provider, 'GET', path)).data; }
   catch (error) { if (error.status === 404) return; throw error; }
   // Disabled hooks remain owned and may be deleted; all other ownership checks still apply.
-  if (!owns({ ...hook, enabled: true }, auth, url, group, subscriptionKey, recordedMarker)) throw new IntegrationError('subscription_ownership_mismatch');
+  if (!owns({ ...hook, enabled: true }, auth, url, group, subscriptionKey, recordedMarker, cleanupTypes)) throw new IntegrationError('subscription_ownership_mismatch');
   await call(auth, transport, provider, 'DELETE', path, undefined, `integration-delete-${id}`);
 }
 function authenticate(auth, group, subscriptionKey, incomingHeaders, prefixes = ['']) {
@@ -126,8 +145,8 @@ function authenticate(auth, group, subscriptionKey, incomingHeaders, prefixes = 
   return timingSafeEqual(Buffer.from(entries[0][1]), Buffer.from(expected.value));
 }
 function envelope(body, group) {
-  if (!events[group] || !body || typeof body !== 'object' || Array.isArray(body) || typeof body.id !== 'string' || !body.id || typeof body.session !== 'string' || !body.session || typeof body.timestamp !== 'string' || !Number.isFinite(Date.parse(body.timestamp)) || !events[group].types.includes(body.event) || !body.payload || typeof body.payload !== 'object' || Array.isArray(body.payload)) throw new IntegrationError('invalid_event');
+  if (!events[group] || !body || typeof body !== 'object' || Array.isArray(body) || typeof body.id !== 'string' || !body.id || typeof body.connection !== 'string' || !body.connection || typeof body.timestamp !== 'string' || !Number.isFinite(Date.parse(body.timestamp)) || !events[group].types.includes(body.event) || !body.payload || typeof body.payload !== 'object' || Array.isArray(body.payload)) throw new IntegrationError('invalid_event');
   // Copy the defined envelope only. Never export arbitrary top-level transport fields.
-  return { id: body.id, session: body.session, ...(typeof body.externalId === 'string' ? { externalId: body.externalId } : {}), timestamp: body.timestamp, event: body.event, payload: body.payload };
+  return { id: body.id, connection: body.connection, ...(typeof body.externalId === 'string' ? { externalId: body.externalId } : {}), timestamp: body.timestamp, event: body.event, payload: body.payload };
 }
 module.exports = { identity, callback, sameCallback, creationKey, creation, owns, find, subscribe, activate, unsubscribe, authenticate, envelope };

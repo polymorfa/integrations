@@ -37,7 +37,7 @@
       ],
       "parameters": {
         "operation": "sendText",
-        "session": "={{$json.numberId}}",
+        "connection": "={{$json.connectionId}}",
         "recipientType": "phoneNumber",
         "recipient": "={{$json.recipient}}",
         "text": "={{$json.notificationText}}",

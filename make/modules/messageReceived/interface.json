@@ -5,8 +5,8 @@
     "type": "text"
   },
   {
-    "name": "session",
-    "label": "session",
+    "name": "connection",
+    "label": "connection",
     "type": "text"
   },
   {
@@ -37,7 +37,19 @@
       {
         "name": "whatsapp_ids",
         "label": "whatsapp_ids",
-        "type": "collection"
+        "type": "collection",
+        "spec": [
+          {
+            "name": "linked_devices",
+            "label": "linked_devices",
+            "type": "text"
+          },
+          {
+            "name": "official_api",
+            "label": "official_api",
+            "type": "text"
+          }
+        ]
       },
       {
         "name": "whatsapp_id",
@@ -77,7 +89,34 @@
           {
             "name": "sender",
             "label": "sender",
-            "type": "collection"
+            "type": "collection",
+            "spec": [
+              {
+                "name": "id",
+                "label": "id",
+                "type": "text"
+              },
+              {
+                "name": "phoneNumber",
+                "label": "phoneNumber",
+                "type": "text"
+              },
+              {
+                "name": "bsuid",
+                "label": "bsuid",
+                "type": "text"
+              },
+              {
+                "name": "username",
+                "label": "username",
+                "type": "text"
+              },
+              {
+                "name": "parentBsuid",
+                "label": "parentBsuid",
+                "type": "text"
+              }
+            ]
           }
         ]
       },
@@ -228,7 +267,22 @@
       {
         "name": "pollOptions",
         "label": "pollOptions",
-        "type": "array"
+        "type": "array",
+        "spec": {
+          "type": "collection",
+          "spec": [
+            {
+              "name": "name",
+              "label": "name",
+              "type": "text"
+            },
+            {
+              "name": "hash",
+              "label": "hash",
+              "type": "text"
+            }
+          ]
+        }
       },
       {
         "name": "unavailable",
@@ -239,6 +293,98 @@
         "name": "unavailableReason",
         "label": "unavailableReason",
         "type": "text"
+      },
+      {
+        "name": "stickerType",
+        "label": "stickerType",
+        "type": "text"
+      },
+      {
+        "name": "origin",
+        "label": "origin",
+        "type": "text"
+      },
+      {
+        "name": "emojis",
+        "label": "emojis",
+        "type": "array"
+      },
+      {
+        "name": "accessibilityLabel",
+        "label": "accessibilityLabel",
+        "type": "text"
+      },
+      {
+        "name": "stickerPack",
+        "label": "stickerPack",
+        "type": "collection",
+        "spec": [
+          {
+            "name": "id",
+            "label": "id",
+            "type": "text"
+          },
+          {
+            "name": "name",
+            "label": "name",
+            "type": "text"
+          },
+          {
+            "name": "publisher",
+            "label": "publisher",
+            "type": "text"
+          },
+          {
+            "name": "description",
+            "label": "description",
+            "type": "text"
+          },
+          {
+            "name": "trayIconFileName",
+            "label": "trayIconFileName",
+            "type": "text"
+          },
+          {
+            "name": "items",
+            "label": "items",
+            "type": "array",
+            "spec": {
+              "type": "collection",
+              "spec": [
+                {
+                  "name": "fileName",
+                  "label": "fileName",
+                  "type": "text"
+                },
+                {
+                  "name": "stickerType",
+                  "label": "stickerType",
+                  "type": "text"
+                },
+                {
+                  "name": "mimeType",
+                  "label": "mimeType",
+                  "type": "text"
+                },
+                {
+                  "name": "emojis",
+                  "label": "emojis",
+                  "type": "array"
+                },
+                {
+                  "name": "accessibilityLabel",
+                  "label": "accessibilityLabel",
+                  "type": "text"
+                },
+                {
+                  "name": "premium",
+                  "label": "premium",
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        ]
       },
       {
         "name": "width",
@@ -320,7 +466,29 @@
           {
             "name": "thumbnail",
             "label": "thumbnail",
-            "type": "collection"
+            "type": "collection",
+            "spec": [
+              {
+                "name": "contentType",
+                "label": "contentType",
+                "type": "text"
+              },
+              {
+                "name": "data",
+                "label": "data",
+                "type": "text"
+              },
+              {
+                "name": "width",
+                "label": "width",
+                "type": "number"
+              },
+              {
+                "name": "height",
+                "label": "height",
+                "type": "number"
+              }
+            ]
           }
         ]
       },
@@ -374,7 +542,32 @@
           {
             "name": "items",
             "label": "items",
-            "type": "array"
+            "type": "array",
+            "spec": {
+              "type": "collection",
+              "spec": [
+                {
+                  "name": "productRetailerId",
+                  "label": "productRetailerId",
+                  "type": "text"
+                },
+                {
+                  "name": "quantity",
+                  "label": "quantity",
+                  "type": "number"
+                },
+                {
+                  "name": "itemPrice",
+                  "label": "itemPrice",
+                  "type": "number"
+                },
+                {
+                  "name": "currency",
+                  "label": "currency",
+                  "type": "text"
+                }
+              ]
+            }
           }
         ]
       },

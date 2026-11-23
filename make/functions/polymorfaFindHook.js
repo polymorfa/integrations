@@ -1,6 +1,6 @@
 function polymorfaFindHook(body, auth, url, group, key) {
 const expected = iml.polymorfaHook(auth, group, key);
-const types = {"messageReceived":["message.received"],"messageState":["message.sent","message.ack","message.failed","message.update"],"numberState":["session.status","session.connected","session.logged_out"],"callEnded":["call.ended"]};
+const types = {"messageReceived":["message.received"],"messageState":["message.sent","message.ack","message.failed","message.update"],"connectionState":["connection.status","connection.connected","connection.logged_out"],"callEnded":["call.ended"]};
 // Match shared sameCallback: an invalid URL on any hook is simply not a match.
 const same = h => { try { return iml.polymorfaCallback(h.url) === iml.polymorfaCallback(url); } catch (error) { return false; } };
 if (!Array.isArray(body.data) || body.page?.hasMore) throw new Error('Subscription inventory needs reconciliation.');

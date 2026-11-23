@@ -5,7 +5,7 @@ import hooks from './common/hooks.cjs';
 export default {
   type: 'app', app: 'polymorfa',
   propDefinitions: {
-    session: { type: 'string', label: 'Number', description: 'Exact Polymorfa Number identifier, kept as a string.' },
+    connection: { type: 'string', label: 'Connection', description: 'Exact Polymorfa Connection identifier, kept as a string.' },
   },
   methods: {
     auth() { return { apiKey: this.$auth.api_key, projectId: this.$auth.project_id }; },

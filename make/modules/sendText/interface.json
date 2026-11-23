@@ -116,7 +116,64 @@
               {
                 "name": "descriptor",
                 "label": "descriptor",
-                "type": "collection"
+                "type": "collection",
+                "spec": [
+                  {
+                    "name": "url",
+                    "label": "url",
+                    "type": "text"
+                  },
+                  {
+                    "name": "directPath",
+                    "label": "directPath",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKey",
+                    "label": "mediaKey",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileSha256",
+                    "label": "fileSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileEncSha256",
+                    "label": "fileEncSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileLength",
+                    "label": "fileLength",
+                    "type": "number"
+                  },
+                  {
+                    "name": "mimeType",
+                    "label": "mimeType",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKeyTimestamp",
+                    "label": "mediaKeyTimestamp",
+                    "type": "number"
+                  },
+                  {
+                    "name": "thumbnail",
+                    "label": "thumbnail",
+                    "type": "text"
+                  },
+                  {
+                    "name": "width",
+                    "label": "width",
+                    "type": "number"
+                  },
+                  {
+                    "name": "height",
+                    "label": "height",
+                    "type": "number"
+                  }
+                ]
               },
               {
                 "name": "quality",
@@ -158,7 +215,69 @@
               {
                 "name": "descriptor",
                 "label": "descriptor",
-                "type": "collection"
+                "type": "collection",
+                "spec": [
+                  {
+                    "name": "url",
+                    "label": "url",
+                    "type": "text"
+                  },
+                  {
+                    "name": "directPath",
+                    "label": "directPath",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKey",
+                    "label": "mediaKey",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileSha256",
+                    "label": "fileSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileEncSha256",
+                    "label": "fileEncSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileLength",
+                    "label": "fileLength",
+                    "type": "number"
+                  },
+                  {
+                    "name": "mimeType",
+                    "label": "mimeType",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKeyTimestamp",
+                    "label": "mediaKeyTimestamp",
+                    "type": "number"
+                  },
+                  {
+                    "name": "thumbnail",
+                    "label": "thumbnail",
+                    "type": "text"
+                  },
+                  {
+                    "name": "width",
+                    "label": "width",
+                    "type": "number"
+                  },
+                  {
+                    "name": "height",
+                    "label": "height",
+                    "type": "number"
+                  },
+                  {
+                    "name": "seconds",
+                    "label": "seconds",
+                    "type": "number"
+                  }
+                ]
               }
             ]
           },
@@ -200,7 +319,54 @@
               {
                 "name": "descriptor",
                 "label": "descriptor",
-                "type": "collection"
+                "type": "collection",
+                "spec": [
+                  {
+                    "name": "url",
+                    "label": "url",
+                    "type": "text"
+                  },
+                  {
+                    "name": "directPath",
+                    "label": "directPath",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKey",
+                    "label": "mediaKey",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileSha256",
+                    "label": "fileSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileEncSha256",
+                    "label": "fileEncSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileLength",
+                    "label": "fileLength",
+                    "type": "number"
+                  },
+                  {
+                    "name": "mimeType",
+                    "label": "mimeType",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKeyTimestamp",
+                    "label": "mediaKeyTimestamp",
+                    "type": "number"
+                  },
+                  {
+                    "name": "thumbnail",
+                    "label": "thumbnail",
+                    "type": "text"
+                  }
+                ]
               }
             ]
           },
@@ -237,7 +403,59 @@
               {
                 "name": "descriptor",
                 "label": "descriptor",
-                "type": "collection"
+                "type": "collection",
+                "spec": [
+                  {
+                    "name": "url",
+                    "label": "url",
+                    "type": "text"
+                  },
+                  {
+                    "name": "directPath",
+                    "label": "directPath",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKey",
+                    "label": "mediaKey",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileSha256",
+                    "label": "fileSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileEncSha256",
+                    "label": "fileEncSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileLength",
+                    "label": "fileLength",
+                    "type": "number"
+                  },
+                  {
+                    "name": "mimeType",
+                    "label": "mimeType",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKeyTimestamp",
+                    "label": "mediaKeyTimestamp",
+                    "type": "number"
+                  },
+                  {
+                    "name": "seconds",
+                    "label": "seconds",
+                    "type": "number"
+                  },
+                  {
+                    "name": "waveform",
+                    "label": "waveform",
+                    "type": "text"
+                  }
+                ]
               }
             ]
           },
@@ -247,9 +465,284 @@
             "type": "collection",
             "spec": [
               {
+                "name": "url",
+                "label": "url",
+                "type": "text"
+              },
+              {
+                "name": "base64",
+                "label": "base64",
+                "type": "text"
+              },
+              {
                 "name": "descriptor",
                 "label": "descriptor",
-                "type": "collection"
+                "type": "collection",
+                "spec": [
+                  {
+                    "name": "url",
+                    "label": "url",
+                    "type": "text"
+                  },
+                  {
+                    "name": "directPath",
+                    "label": "directPath",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKey",
+                    "label": "mediaKey",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileSha256",
+                    "label": "fileSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileEncSha256",
+                    "label": "fileEncSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileLength",
+                    "label": "fileLength",
+                    "type": "number"
+                  },
+                  {
+                    "name": "mimeType",
+                    "label": "mimeType",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKeyTimestamp",
+                    "label": "mediaKeyTimestamp",
+                    "type": "number"
+                  },
+                  {
+                    "name": "width",
+                    "label": "width",
+                    "type": "number"
+                  },
+                  {
+                    "name": "height",
+                    "label": "height",
+                    "type": "number"
+                  },
+                  {
+                    "name": "stickerType",
+                    "label": "stickerType",
+                    "type": "text"
+                  }
+                ]
+              },
+              {
+                "name": "emojis",
+                "label": "emojis",
+                "type": "array"
+              },
+              {
+                "name": "accessibilityLabel",
+                "label": "accessibilityLabel",
+                "type": "text"
+              }
+            ]
+          },
+          {
+            "name": "stickerPack",
+            "label": "stickerPack",
+            "type": "collection",
+            "spec": [
+              {
+                "name": "id",
+                "label": "id",
+                "type": "text"
+              },
+              {
+                "name": "name",
+                "label": "name",
+                "type": "text"
+              },
+              {
+                "name": "publisher",
+                "label": "publisher",
+                "type": "text"
+              },
+              {
+                "name": "description",
+                "label": "description",
+                "type": "text"
+              },
+              {
+                "name": "caption",
+                "label": "caption",
+                "type": "text"
+              },
+              {
+                "name": "items",
+                "label": "items",
+                "type": "array",
+                "spec": {
+                  "type": "collection",
+                  "spec": [
+                    {
+                      "name": "emojis",
+                      "label": "emojis",
+                      "type": "array"
+                    },
+                    {
+                      "name": "accessibilityLabel",
+                      "label": "accessibilityLabel",
+                      "type": "text"
+                    },
+                    {
+                      "name": "fileName",
+                      "label": "fileName",
+                      "type": "text"
+                    },
+                    {
+                      "name": "url",
+                      "label": "url",
+                      "type": "text"
+                    },
+                    {
+                      "name": "base64",
+                      "label": "base64",
+                      "type": "text"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "trayIcon",
+                "label": "trayIcon",
+                "type": "collection",
+                "spec": [
+                  {
+                    "name": "url",
+                    "label": "url",
+                    "type": "text"
+                  },
+                  {
+                    "name": "base64",
+                    "label": "base64",
+                    "type": "text"
+                  }
+                ]
+              },
+              {
+                "name": "descriptor",
+                "label": "descriptor",
+                "type": "collection",
+                "spec": [
+                  {
+                    "name": "url",
+                    "label": "url",
+                    "type": "text"
+                  },
+                  {
+                    "name": "directPath",
+                    "label": "directPath",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKey",
+                    "label": "mediaKey",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileSha256",
+                    "label": "fileSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileEncSha256",
+                    "label": "fileEncSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileLength",
+                    "label": "fileLength",
+                    "type": "number"
+                  },
+                  {
+                    "name": "mimeType",
+                    "label": "mimeType",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKeyTimestamp",
+                    "label": "mediaKeyTimestamp",
+                    "type": "number"
+                  }
+                ]
+              },
+              {
+                "name": "trayIconFileName",
+                "label": "trayIconFileName",
+                "type": "text"
+              },
+              {
+                "name": "thumbnailDescriptor",
+                "label": "thumbnailDescriptor",
+                "type": "collection",
+                "spec": [
+                  {
+                    "name": "url",
+                    "label": "url",
+                    "type": "text"
+                  },
+                  {
+                    "name": "directPath",
+                    "label": "directPath",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKey",
+                    "label": "mediaKey",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileSha256",
+                    "label": "fileSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileEncSha256",
+                    "label": "fileEncSha256",
+                    "type": "text"
+                  },
+                  {
+                    "name": "fileLength",
+                    "label": "fileLength",
+                    "type": "number"
+                  },
+                  {
+                    "name": "mimeType",
+                    "label": "mimeType",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mediaKeyTimestamp",
+                    "label": "mediaKeyTimestamp",
+                    "type": "number"
+                  },
+                  {
+                    "name": "width",
+                    "label": "width",
+                    "type": "number"
+                  },
+                  {
+                    "name": "height",
+                    "label": "height",
+                    "type": "number"
+                  }
+                ]
+              },
+              {
+                "name": "forwardMedia",
+                "label": "forwardMedia",
+                "type": "text"
               }
             ]
           },
@@ -372,7 +865,24 @@
               {
                 "name": "image",
                 "label": "image",
-                "type": "collection"
+                "type": "collection",
+                "spec": [
+                  {
+                    "name": "url",
+                    "label": "url",
+                    "type": "text"
+                  },
+                  {
+                    "name": "base64",
+                    "label": "base64",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mimeType",
+                    "label": "mimeType",
+                    "type": "text"
+                  }
+                ]
               },
               {
                 "name": "body",
@@ -419,7 +929,22 @@
               {
                 "name": "sections",
                 "label": "sections",
-                "type": "array"
+                "type": "array",
+                "spec": {
+                  "type": "collection",
+                  "spec": [
+                    {
+                      "name": "title",
+                      "label": "title",
+                      "type": "text"
+                    },
+                    {
+                      "name": "productIds",
+                      "label": "productIds",
+                      "type": "array"
+                    }
+                  ]
+                }
               }
             ]
           },
@@ -513,7 +1038,173 @@
               {
                 "name": "sections",
                 "label": "sections",
-                "type": "array"
+                "type": "array",
+                "spec": {
+                  "type": "collection",
+                  "spec": [
+                    {
+                      "name": "title",
+                      "label": "title",
+                      "type": "text"
+                    },
+                    {
+                      "name": "rows",
+                      "label": "rows",
+                      "type": "array",
+                      "spec": {
+                        "type": "collection",
+                        "spec": [
+                          {
+                            "name": "id",
+                            "label": "id",
+                            "type": "text"
+                          },
+                          {
+                            "name": "title",
+                            "label": "title",
+                            "type": "text"
+                          },
+                          {
+                            "name": "description",
+                            "label": "description",
+                            "type": "text"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "carousel",
+            "label": "carousel",
+            "type": "collection",
+            "spec": [
+              {
+                "name": "body",
+                "label": "body",
+                "type": "text"
+              },
+              {
+                "name": "footer",
+                "label": "footer",
+                "type": "text"
+              },
+              {
+                "name": "cards",
+                "label": "cards",
+                "type": "array",
+                "spec": {
+                  "type": "collection",
+                  "spec": [
+                    {
+                      "name": "body",
+                      "label": "body",
+                      "type": "text"
+                    },
+                    {
+                      "name": "buttons",
+                      "label": "buttons",
+                      "type": "array",
+                      "spec": {
+                        "type": "collection",
+                        "spec": [
+                          {
+                            "name": "type",
+                            "label": "type",
+                            "type": "text"
+                          },
+                          {
+                            "name": "text",
+                            "label": "text",
+                            "type": "text"
+                          },
+                          {
+                            "name": "url",
+                            "label": "url",
+                            "type": "text"
+                          },
+                          {
+                            "name": "phoneNumber",
+                            "label": "phoneNumber",
+                            "type": "text"
+                          },
+                          {
+                            "name": "id",
+                            "label": "id",
+                            "type": "text"
+                          },
+                          {
+                            "name": "copyCode",
+                            "label": "copyCode",
+                            "type": "text"
+                          },
+                          {
+                            "name": "businessPhoneNumber",
+                            "label": "businessPhoneNumber",
+                            "type": "text"
+                          },
+                          {
+                            "name": "catalogProductId",
+                            "label": "catalogProductId",
+                            "type": "text"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "image",
+                      "label": "image",
+                      "type": "collection",
+                      "spec": [
+                        {
+                          "name": "url",
+                          "label": "url",
+                          "type": "text"
+                        },
+                        {
+                          "name": "base64",
+                          "label": "base64",
+                          "type": "text"
+                        },
+                        {
+                          "name": "mimeType",
+                          "label": "mimeType",
+                          "type": "text"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "video",
+                      "label": "video",
+                      "type": "collection",
+                      "spec": [
+                        {
+                          "name": "url",
+                          "label": "url",
+                          "type": "text"
+                        },
+                        {
+                          "name": "base64",
+                          "label": "base64",
+                          "type": "text"
+                        },
+                        {
+                          "name": "mimeType",
+                          "label": "mimeType",
+                          "type": "text"
+                        },
+                        {
+                          "name": "thumbnail",
+                          "label": "thumbnail",
+                          "type": "text"
+                        }
+                      ]
+                    }
+                  ]
+                }
               }
             ]
           },
@@ -522,6 +1213,43 @@
             "label": "buttons",
             "type": "collection",
             "spec": [
+              {
+                "name": "media",
+                "label": "media",
+                "type": "collection",
+                "spec": [
+                  {
+                    "name": "url",
+                    "label": "url",
+                    "type": "text"
+                  },
+                  {
+                    "name": "base64",
+                    "label": "base64",
+                    "type": "text"
+                  },
+                  {
+                    "name": "mimeType",
+                    "label": "mimeType",
+                    "type": "text"
+                  },
+                  {
+                    "name": "type",
+                    "label": "type",
+                    "type": "text"
+                  },
+                  {
+                    "name": "filename",
+                    "label": "filename",
+                    "type": "text"
+                  },
+                  {
+                    "name": "thumbnail",
+                    "label": "thumbnail",
+                    "type": "text"
+                  }
+                ]
+              },
               {
                 "name": "title",
                 "label": "title",
@@ -540,7 +1268,52 @@
               {
                 "name": "buttons",
                 "label": "buttons",
-                "type": "array"
+                "type": "array",
+                "spec": {
+                  "type": "collection",
+                  "spec": [
+                    {
+                      "name": "type",
+                      "label": "type",
+                      "type": "text"
+                    },
+                    {
+                      "name": "text",
+                      "label": "text",
+                      "type": "text"
+                    },
+                    {
+                      "name": "url",
+                      "label": "url",
+                      "type": "text"
+                    },
+                    {
+                      "name": "phoneNumber",
+                      "label": "phoneNumber",
+                      "type": "text"
+                    },
+                    {
+                      "name": "id",
+                      "label": "id",
+                      "type": "text"
+                    },
+                    {
+                      "name": "copyCode",
+                      "label": "copyCode",
+                      "type": "text"
+                    },
+                    {
+                      "name": "businessPhoneNumber",
+                      "label": "businessPhoneNumber",
+                      "type": "text"
+                    },
+                    {
+                      "name": "catalogProductId",
+                      "label": "catalogProductId",
+                      "type": "text"
+                    }
+                  ]
+                }
               }
             ]
           },

@@ -19,7 +19,7 @@ function segment(value, name) {
   if (!/^[A-Za-z0-9_-]{1,256}$/.test(value)) throw new IntegrationError(`invalid_${name}`);
   return value;
 }
-const events = {"messageReceived":{"label":"New Message","description":"Triggers when a message is received.","types":["message.received"]},"messageState":{"label":"Message State Changed","description":"Triggers when a message is sent, acknowledged, failed or updated.","types":["message.sent","message.ack","message.failed","message.update"]},"numberState":{"label":"Number State Changed","description":"Triggers when a Number changes state, connects or logs out.","types":["session.status","session.connected","session.logged_out"]},"callEnded":{"label":"Call Ended","description":"Triggers when a call ends.","types":["call.ended"]}};
+const events = {"messageReceived":{"label":"New Message","description":"Triggers when a message is received.","types":["message.received"]},"messageState":{"label":"Message State Changed","description":"Triggers when a message is sent, acknowledged, failed or updated.","types":["message.sent","message.ack","message.failed","message.update"]},"connectionState":{"label":"Connection State Changed","description":"Triggers when a Connection changes state, connects or logs out.","types":["connection.status","connection.connected","connection.logged_out"]},"callEnded":{"label":"Call Ended","description":"Triggers when a call ends.","types":["call.ended"]}};
 if (!events[group]) throw new IntegrationError('invalid_event_group');
 required(subscriptionKey, 'subscription_key');
 if (subscriptionKey.length > 200) throw new IntegrationError('invalid_subscription_key');

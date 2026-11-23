@@ -4,11 +4,11 @@ export default {
   key: "polymorfa-sendText", name: "Send Text", description: "Sends a text message or replies to a message.",
   version: '0.1.0', type: 'action',
   props: { polymorfa, ...{
-  "session": {
+  "connection": {
     "type": "string",
-    "label": "Number",
+    "label": "Connection",
     "optional": false,
-    "description": "The exact Number identifier from Polymorfa. Keep it as a string."
+    "description": "The exact Connection identifier from Polymorfa. Keep it as a string."
   },
   "recipientType": {
     "type": "string",
@@ -57,11 +57,11 @@ export default {
     "type": "string",
     "label": "Write Started At",
     "optional": false,
-    "description": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes older than 23 hours require reconciliation."
+    "description": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes at least 55 minutes old require reconciliation."
   }
 } },
   async run({ $ }) {
-    const input = Object.fromEntries(["session","recipientType","recipient","text","quotedMessageId","idempotencyKey","writeCreatedAt"].map(key => [key, this[key]]));
+    const input = Object.fromEntries(["connection","recipientType","recipient","text","quotedMessageId","idempotencyKey","writeCreatedAt"].map(key => [key, this[key]]));
     return this.polymorfa.execute($, "sendText", input);
   },
 };

@@ -1,0 +1,6 @@
+{
+  "label": "Connection State Changed",
+  "description": "Triggers when a Connection changes state, connects or logs out.",
+  "type": "instant",
+  "webhook": "connectionState"
+}

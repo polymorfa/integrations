@@ -24,7 +24,7 @@ export default {
     "type": "string",
     "label": "Path",
     "optional": false,
-    "description": "A supported relative public API path, for example /platform/sessions. External hosts and credential operations are refused."
+    "description": "A supported relative public API path, for example /platform/connections. External hosts and credential operations are refused."
   },
   "requestBody": {
     "type": "string",
@@ -43,7 +43,7 @@ export default {
     "type": "string",
     "label": "Write Started At",
     "optional": true,
-    "description": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes older than 23 hours require reconciliation."
+    "description": "Required for writes. ISO timestamp saved when this logical write first began. Preserve it across retries; writes at least 55 minutes old require reconciliation."
   }
 } },
   async run({ $ }) {

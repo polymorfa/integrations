@@ -2,7 +2,7 @@
   "stage": "native templates pending assigned app IDs and editor acceptance",
   "orderNotification": {
     "action": "sendText",
-    "fields": { "session": "order.numberId", "recipientType": "phoneNumber", "recipient": "order.recipient", "text": "order.notificationText", "idempotencyKey": "order-notification:{savedNotificationId}", "writeCreatedAt": "order.savedNotificationStartedAt" },
+    "fields": { "connection": "order.connectionId", "recipientType": "phoneNumber", "recipient": "order.recipient", "text": "order.notificationText", "idempotencyKey": "order-notification:{savedNotificationId}", "writeCreatedAt": "order.savedNotificationStartedAt" },
     "platforms": {
       "make": { "module": "sendText", "appId": null, "blueprintId": null },
       "zapier": { "action": "sendText", "appId": null, "templateId": null },

@@ -3,9 +3,9 @@
     "url": "/platform/projects/{{polymorfaSegment(connection.projectId)}}/webhooks/{{polymorfaSegment(webhook.externalHookId)}}",
     "method": "GET",
     "response": {
-      "valid": "{{polymorfaDetachHook(statusCode; body; webhook.externalHookId; connection.projectId; webhook.ownedUrl; webhook.receiverName; 'numberState') != null}}",
+      "valid": "{{polymorfaDetachHook(statusCode; body; webhook.externalHookId; connection.projectId; webhook.ownedUrl; webhook.receiverName; 'connectionState') != null}}",
       "temp": {
-        "ownedPresent": "{{polymorfaDetachHook(statusCode; body; webhook.externalHookId; connection.projectId; webhook.ownedUrl; webhook.receiverName; 'numberState')}}"
+        "ownedPresent": "{{polymorfaDetachHook(statusCode; body; webhook.externalHookId; connection.projectId; webhook.ownedUrl; webhook.receiverName; 'connectionState')}}"
       }
     }
   },

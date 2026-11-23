@@ -10,7 +10,7 @@ const ajv = new Ajv({ strict: false, allErrors: true }); addFormats(ajv);
 ajv.addSchema(spec, 'messaging');
 const now = Date.parse('2026-11-01T12:00:00Z');
 const auth = { apiKey: 'synthetic-project-token-not-a-credential', projectId: '11111111-1111-4111-8111-111111111111' };
-const input = { session: '739182640518203', recipientType: 'id', recipient: '9007199254740993123', text: 'An order is ready.', idempotencyKey: 'order-123-notification-1', writeCreatedAt: '2026-11-01T11:59:00Z' };
+const input = { connection: '739182640518203', recipientType: 'id', recipient: '9007199254740993123', text: 'An order is ready.', idempotencyKey: 'order-123-notification-1', writeCreatedAt: '2026-11-01T11:59:00Z' };
 
 test('valid base64 media through the decoded limit does not exhaust the regex stack', () => {
   for (const size of [core.MAX_MEDIA_BYTES - 2, core.MAX_MEDIA_BYTES - 1, core.MAX_MEDIA_BYTES]) {
@@ -59,13 +59,13 @@ for (const created of [undefined, 'not a date', '2026-10-31T12:00:00Z', '2026-11
   assert.throws(() => core.buildRequest('sendText', { ...input, writeCreatedAt: created }, auth, 'test', now));
 });
 for (const [method, path] of [
-  ['POST', 'https://attacker.example/'], ['GET', '//attacker.example/'], ['GET', '/platform/sessions?projectId=other'],
-  ['GET', '/platform/../admin'], ['GET', '/platform/%2e%2e/credentials'], ['GET', '/platform\\sessions'],
+  ['POST', 'https://attacker.example/'], ['GET', '//attacker.example/'], ['GET', '/platform/connections?projectId=other'],
+  ['GET', '/platform/../admin'], ['GET', '/platform/%2e%2e/credentials'], ['GET', '/platform\\connections'],
   ['GET', '/platform/projects/project/credentials'], ['POST', '/platform/projects/project/webhooks'],
   ['POST', '/platform/functions/invoke'], ['DELETE', '/messaging/number/messages/send'],
 ]) test(`advanced request refuses ${method} ${path}`, () => assert.throws(() => core.buildRequest('apiRequest', { method, path, requestBody: '{}' }, auth, 'test', now)));
-test('advanced allowed read scopes the Number list to the connected project', () => {
-  const r = core.buildRequest('apiRequest', { method: 'GET', path: '/platform/sessions' }, auth);
+test('advanced allowed read scopes the Connection list to the connected project', () => {
+  const r = core.buildRequest('apiRequest', { method: 'GET', path: '/platform/connections' }, auth);
   assert.deepEqual(r.query, { projectId: auth.projectId });
 });
 test('advanced sends cannot add SDK-only transport fields to the public request', () => {
@@ -102,8 +102,14 @@ test('a server error on a write keeps reconcile guidance even when the body carr
   for (const status of [500, 503]) {
     const transport = async () => ({ status, headers: { 'x-request-id': 'safe-request' }, body: { error: { code: 'internal_error', message: auth.apiKey } } });
     await assert.rejects(core.execute('sendText', input, auth, transport, 'test', now), e => e.code === 'internal_error' && e.status === status && /Reconcile the original write before retrying\. Keep its key and start time\./.test(e.message) && !e.message.includes(auth.apiKey));
-    await assert.rejects(core.execute('listNumbers', {}, auth, transport, 'test', now), e => e.code === 'internal_error' && !/Reconcile/.test(e.message));
+    await assert.rejects(core.execute('listConnections', {}, auth, transport, 'test', now), e => e.code === 'internal_error' && !/Reconcile/.test(e.message));
   }
   const inProgress = async () => ({ status: 409, headers: { 'retry-after': '5' }, body: { error: { code: 'idempotency_in_progress' } } });
   await assert.rejects(core.execute('sendText', input, auth, inProgress, 'test', now), e => e.retryAfter === 5 && /Reconcile/.test(e.message) && /Wait at least 5 seconds/.test(e.message));
+});
+
+test('retired account inputs, actions and routes have no runtime aliases', () => {
+  assert.throws(() => core.buildRequest('sendText', { ...input, connection: undefined, session: input.connection }, auth, 'test', now), e => e.code === 'invalid_connection');
+  assert.throws(() => core.buildRequest('listNumbers', {}, auth), e => e.code === 'unknown_action');
+  assert.throws(() => core.buildRequest('apiRequest', { method: 'GET', path: '/platform/sessions' }, auth), e => e.code === 'unsupported_operation');
 });

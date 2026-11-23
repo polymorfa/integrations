@@ -51,7 +51,7 @@ webhooks under one Polymorfa-owned app. Keep API keys and derived receiver value
 in private connection/webhook state. Map static and mappable parameter files in
 the native editor. Real API upload/import and editor acceptance are pending.
 
-Connection tests require `sessions:read`. Sends/reactions need `messages:write`,
+Connection tests require `connections:read`. Sends/reactions need `messages:write`,
 template lookup `templates:read`, and hooks `webhooks:read` plus `webhooks:manage`.
 The universal **Make an API call** module permits only the public allowlist on
 the fixed Polymorfa origin; it cannot call arbitrary hosts or change principals.

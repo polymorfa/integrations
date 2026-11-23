@@ -25,15 +25,15 @@ function advanced(p, auth) {
   const path = required(p.path, 'path');
   if (!path.startsWith('/') || path.startsWith('//') || /[%\\?#\s]/.test(path) || path.split('/').some(x => x === '.' || x === '..')) throw new IntegrationError('unsupported_path');
   const method = p.method;
-  const allowed = (method === 'GET' && (path === '/platform/sessions' || /^\/messaging\/projects\/[A-Za-z0-9_-]+\/templates(?:\/[A-Za-z0-9_-]+)?$/.test(path))) ||
-    (method === 'POST' && /^\/messaging\/[A-Za-z0-9_-]+\/messages\/(send|react)$/.test(path));
+  const allowed = (method === 'GET' && (path === '/platform/connections' || /^\/messaging\/projects\/[A-Za-z0-9_-]+\/templates(?:\/[A-Za-z0-9_-]+)?$/.test(path))) ||
+    (method === 'POST' && /^\/messaging\/[A-Za-z0-9._-]{1,64}\/messages\/(send|react)$/.test(path));
   if (!allowed) throw new IntegrationError('unsupported_operation');
   const body = method === 'POST' ? object(p.requestBody, 'request_body') : undefined;
   if (body) {
     const keys = path.endsWith('/react') ? ['conversation', 'id', 'reaction'] : ['conversation', 'isForwarded', 'mentions', 'quotedMessage', 'content'];
     if (Object.keys(body).some(k => !keys.includes(k))) throw new IntegrationError('unsupported_request_field');
   }
-  return { method, url: ORIGIN + path, ...(body ? { body } : {}), ...(path === '/platform/sessions' ? { query: { projectId: auth.projectId } } : {}) };
+  return { method, url: ORIGIN + path, ...(body ? { body } : {}), ...(path === '/platform/connections' ? { query: { projectId: auth.projectId } } : {}) };
 }
 return advanced(p, auth);
 }

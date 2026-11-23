@@ -4,7 +4,7 @@ The native integration source passes local schema validation. No Zapier app has
 been registered, uploaded, promoted or listed by this repository.
 
 Use a restricted project token and its project UUID. Connection testing requires
-`sessions:read`. Sends/reactions require `messages:write`, template lookup
+`connections:read`. Sends/reactions require `messages:write`, template lookup
 `templates:read`, and REST Hook lifecycle `webhooks:read` plus `webhooks:manage`.
 
 Actions preserve the public Polymorfa response envelope. A 202 response is an
@@ -36,4 +36,4 @@ Record the approved Beta/Public status and actual directory URL. Do not submit a
 duplicate app or promote a version merely because local validation passes.
 
 Zapier has its own execution, retention and billing. Its processing location is
-separate from the Polymorfa region selected for a Number.
+separate from the Polymorfa region selected for a Connection.

@@ -5,8 +5,8 @@ not been published or verified by n8n. Do not treat an npm name or this source a
 a marketplace listing.
 
 The node sends text/replies, templates, image/video/file/voice media and reactions;
-lists Numbers/templates; and makes allowlisted public API calls. It is usable as
-an AI tool. The trigger receives project-wide message, Number-state and completed
+lists Connections/templates; and makes allowlisted public API calls. It is usable as
+an AI tool. The trigger receives project-wide message, Connection-state and completed
 call events. Functions and asynchronous operation reads are not exposed yet.
 
 Build from this repository's root using the instructions in `MAINTAINING.md`.
@@ -17,7 +17,7 @@ npm pack --workspace n8n-nodes-polymorfa
 ```
 
 Create a **Polymorfa API** credential with a restricted project token and project
-UUID. The credential test and Number picker need `sessions:read`; sends and
+UUID. The credential test and Connection picker need `connections:read`; sends and
 reactions need `messages:write`; template lookup needs `templates:read`.
 Triggers also need `webhooks:read` and `webhooks:manage`.
 
